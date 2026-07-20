@@ -3,20 +3,28 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Ginger Studios & Creatives API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Admin authentication
+  - name: galleries
+    description: Admin gallery management
+  - name: public
+    description: Public client gallery access
+  - name: upload
+    description: File upload
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +32,269 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # --- AUTH ---
+  /auth/login:
+    post:
+      operationId: adminLogin
+      tags: [auth]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: adminLogout
+      tags: [auth]
+      summary: Admin logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current admin session
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # --- ADMIN GALLERIES ---
+  /galleries:
+    get:
+      operationId: listGalleries
+      tags: [galleries]
+      summary: List all client galleries (admin)
+      responses:
+        "200":
+          description: List of galleries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Gallery"
+
+    post:
+      operationId: createGallery
+      tags: [galleries]
+      summary: Create a new client gallery (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GalleryInput"
+      responses:
+        "201":
+          description: Gallery created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gallery"
+
+  /galleries/stats:
+    get:
+      operationId: getGalleryStats
+      tags: [galleries]
+      summary: Dashboard summary stats (admin)
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GalleryStats"
+
+  /galleries/{id}:
+    get:
+      operationId: getGallery
+      tags: [galleries]
+      summary: Get single gallery by ID (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Gallery details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gallery"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    patch:
+      operationId: updateGallery
+      tags: [galleries]
+      summary: Update gallery (admin) — extend, revoke, rename
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GalleryUpdate"
+      responses:
+        "200":
+          description: Gallery updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gallery"
+
+    delete:
+      operationId: deleteGallery
+      tags: [galleries]
+      summary: Delete gallery (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /galleries/{id}/regenerate-link:
+    post:
+      operationId: regenerateGalleryLink
+      tags: [galleries]
+      summary: Regenerate the access token / shareable link
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: New link generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gallery"
+
+  # --- UPLOAD ---
+  /upload/complete:
+    post:
+      operationId: registerUploadedImages
+      tags: [upload]
+      summary: Register already-uploaded image URLs into the system
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadRegistration"
+      responses:
+        "200":
+          description: Upload registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadResult"
+
+  # --- PUBLIC GALLERY ---
+  /gallery/{token}:
+    get:
+      operationId: getPublicGallery
+      tags: [public]
+      summary: Get public gallery by access token (client link)
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Gallery contents
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicGallery"
+        "404":
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "410":
+          description: Gallery link has expired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /gallery/{token}/view:
+    post:
+      operationId: recordGalleryView
+      tags: [public]
+      summary: Increment view count
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: View recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +302,173 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    SuccessResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+      required: [ok]
+
+    LoginInput:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required: [email, password]
+
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+      required: [id, email]
+
+    Gallery:
+      type: object
+      properties:
+        id:
+          type: integer
+        clientName:
+          type: string
+        shootTitle:
+          type: string
+        imageUrls:
+          type: array
+          items:
+            type: string
+        coverUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        accessToken:
+          type: string
+        viewCount:
+          type: integer
+        imageCount:
+          type: integer
+        status:
+          type: string
+          enum: [active, expiring_soon, expired, revoked]
+        notes:
+          type: ["string", "null"]
+      required: [id, clientName, shootTitle, imageUrls, createdAt, expiresAt, accessToken, viewCount, imageCount, status]
+
+    GalleryInput:
+      type: object
+      properties:
+        clientName:
+          type: string
+          minLength: 1
+        shootTitle:
+          type: string
+          minLength: 1
+        imageUrls:
+          type: array
+          items:
+            type: string
+        coverUrl:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        expiresAt:
+          type: ["string", "null"]
+          format: date-time
+      required: [clientName, shootTitle, imageUrls]
+
+    GalleryUpdate:
+      type: object
+      properties:
+        clientName:
+          type: ["string", "null"]
+        shootTitle:
+          type: ["string", "null"]
+        expiresAt:
+          type: ["string", "null"]
+          format: date-time
+        status:
+          type: ["string", "null"]
+          enum: [active, revoked, null]
+        notes:
+          type: ["string", "null"]
+        coverUrl:
+          type: ["string", "null"]
+
+    GalleryStats:
+      type: object
+      properties:
+        totalGalleries:
+          type: integer
+        activeGalleries:
+          type: integer
+        expiringSoon:
+          type: integer
+        expiredGalleries:
+          type: integer
+        totalImages:
+          type: integer
+        totalViews:
+          type: integer
+        recentGalleries:
+          type: array
+          items:
+            $ref: "#/components/schemas/Gallery"
+      required: [totalGalleries, activeGalleries, expiringSoon, expiredGalleries, totalImages, totalViews, recentGalleries]
+
+    PublicGallery:
+      type: object
+      properties:
+        clientName:
+          type: string
+        shootTitle:
+          type: string
+        imageUrls:
+          type: array
+          items:
+            type: string
+        coverUrl:
+          type: ["string", "null"]
+        expiresAt:
+          type: string
+          format: date-time
+        isExpired:
+          type: boolean
+      required: [clientName, shootTitle, imageUrls, expiresAt, isExpired]
+
+    UploadRegistration:
+      type: object
+      properties:
+        urls:
+          type: array
+          items:
+            type: string
+        galleryId:
+          type: ["integer", "null"]
+      required: [urls]
+
+    UploadResult:
+      type: object
+      properties:
+        urls:
+          type: array
+          items:
+            type: string
+        count:
+          type: integer
+      required: [urls, count]

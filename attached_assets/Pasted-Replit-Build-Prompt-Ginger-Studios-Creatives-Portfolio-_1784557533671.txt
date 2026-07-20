@@ -1,0 +1,79 @@
+Replit Build Prompt — Ginger Studios & Creatives Portfolio Site
+
+Paste everything below into Replit's AI Agent as your project brief.
+
+Project overview
+
+Build a premium, light-mode portfolio website for Ginger Studios & Creatives, a photography and videography studio based in Abeokuta, Nigeria, shooting weddings, portraits, birthdays and brand films. The site must feel cinematic, warm and bespoke — not like a template. It also needs a client gallery delivery system: photographers upload a client's shoot, the system generates a private, time-limited link the client can use to view/download their photos, with an option to save the gallery straight to their own Google Drive.
+
+Tech stack
+Frontend: React (Vite), Tailwind CSS, Framer Motion for all animation/transitions
+Routing: React Router
+Backend: Node.js + Express
+Database: PostgreSQL (Replit DB or Neon) — stores galleries, images metadata, client links, expiry dates
+File storage: Cloud object storage for images/video (Cloudinary or Supabase Storage — pick one and wire it up; do not store binary files in Postgres)
+Auth: Simple admin login (photographer/studio owner) via email+password, sessions with JWT or cookie-session
+Google Drive integration: Google Drive API (OAuth 2.0) so a client can click "Add to my Google Drive" and authorize a copy of their gallery into their own Drive
+Email (optional but recommended): Send the client their private gallery link by email when a shoot is uploaded (Resend or Nodemailer)
+Brand & design direction
+Light mode only — warm cream background (
+#FBF6EE), deep ink text (
+#211C17), amber/orange accent (
+#F0961B, matching the "Ginger" logo mark), a deep maroon secondary accent (
+#5C1A20) pulled from the wedding photography palette, warm stone gray for secondary text (
+#8C8072).
+Typography: pair a characterful serif display face (Fraunces or Playfair Display, used in italics for emphasis words) with a clean sans body face (Inter). This is not a generic SaaS look — the display type should feel editorial, like a wedding magazine.
+Logo assets: I'll provide the Ginger Studios & Creatives logo (icon + horizontal + stacked versions) and sample shoot photos — build the components to accept these as static assets in /public/brand/ and /public/sample-work/ for now, structured so real work can be swapped in later.
+No stock "AI generated" clichés: avoid numbered 01/02/03 step markers unless something is genuinely sequential, avoid generic gradient hero cards, avoid dark-mode-with-neon-accent look.
+Hero section (signature element — build this exactly)
+
+The hero is split into two halves on desktop, stacking on mobile:
+
+Left: eyebrow label ("Abeokuta — Photography & Film"), a large serif headline with one word in italic amber, a short supporting line, a primary CTA button ("View the portfolio") with an animated arrow that shifts on hover, a secondary "Showreel, 45s" play affordance, and a thin stat row underneath (e.g. "240+ weddings shot", "3 mo gallery access", "4.9 client rating").
+Right: a realistic phone mockup (CSS-drawn device frame, rounded corners, notch, drop shadow) containing a full-bleed media viewer that:
+Auto-advances every ~3 seconds through a mix of photo and video-poster slides, each with a lower-third caption (category + shoot title) and a small "Reel" badge top-right.
+Supports drag-to-swipe (pointer/touch events) so a visitor can manually scrub through the work, pausing autoplay briefly when they do.
+Has small dot indicators below the phone that reflect the active slide.
+Two small floating "chip" cards drift gently near the phone (e.g. "New gallery ready", "Saved to Drive") using Framer Motion's animate with a slow y-oscillation — subtle, not distracting.
+A soft amber radial glow pulses behind the phone.
+Everything on hero load should animate in with a staggered entrance (copy rises + fades in, phone slides up + rotates into place) using Framer Motion variants — no more than ~1s total so it doesn't feel sluggish.
+Preloader
+
+On first load, show a full-screen cream preloader with the Ginger icon mark rotating/pulsing, the studio name in small tracked-out caps beneath it, and a thin loading bar animating left to right. Fade the whole thing out (opacity + slight scale) once assets are ready, before revealing the hero's entrance animation.
+
+Site structure / pages
+Home — hero (above), then a curated "Selected Work" masonry/grid section mixing photo and video thumbnails (click to open a lightbox/modal with Framer Motion shared-layout transition), a services strip (Weddings / Portraits / Birthdays / Brand Films), a short studio story section, testimonials carousel, and a footer with contact + socials.
+Photography — filterable gallery (Weddings, Portraits, Birthdays, Events) with smooth filter transitions.
+Videography — video reel grid, each opening an inline player.
+Client Gallery Access (/gallery/:token) — the page a client lands on via their private link:
+Validates the token server-side and checks expiry (3 months from upload date).
+If valid and not expired: shows a clean gallery of their photos, a "Download all" (zip) option, individual image download, and an "Add to my Google Drive" button that triggers Google OAuth and copies the images into a folder in the client's own Drive.
+If expired or invalid: a clear, on-brand message explaining the link has expired, with a contact CTA to request a re-send (no vague error, no dead end).
+Admin dashboard (/admin, login-protected):
+Create a new client gallery: upload multiple images (and optionally a video), name the client/shoot, set/confirm the 3-month expiry (auto-calculated but editable), and generate the shareable link.
+List of all client galleries with status (active/expiring soon/expired), view count, and a way to revoke or extend a link.
+Copy-link and "resend email" actions per gallery.
+Client gallery delivery logic (core functionality — be precise here)
+Each gallery record: id, clientName, shootTitle, imageUrls[], createdAt, expiresAt (createdAt + 90 days), accessToken (random, unguessable, URL-safe), viewCount.
+The public /gallery/:token route looks up by accessToken, not by database id, and never exposes the studio's admin routes.
+On expiry, do not delete the underlying files immediately — just block public access and show the expired-state message; let the admin decide whether to extend or delete.
+Google Drive "save" flow: client authorizes read/write to their own Drive via OAuth consent screen scoped only to drive.file (not full Drive access), server creates a folder named after the shoot, and copies the images in.
+Motion & interaction rules
+Use Framer Motion for: hero entrance stagger, phone swipe/autoplay transitions, gallery lightbox open/close (shared layout animation), filter-tab transitions, scroll-triggered reveals for sections below the fold (whileInView), and hover micro-interactions on buttons/cards.
+Respect prefers-reduced-motion — fall back to simple opacity fades.
+Keep animation purposeful and restrained outside the hero; the hero is where the "wow" budget gets spent.
+Responsiveness & quality bar
+Fully responsive down to small mobile screens; the phone-mockup hero should gracefully become a centered, slightly smaller phone with the copy stacked above it on mobile.
+Visible keyboard focus states throughout.
+Fast image loading (lazy-load below-the-fold images, optimized/responsive image sizes).
+What I'll provide separately
+Final logo files (icon, horizontal lockup, stacked lockup) and a first batch of sample photography/videography work to seed the portfolio sections — structure the code to make swapping these in trivial (a simple config/array of work items, not hardcoded JSX per image).
+Build order (so I can review progress in stages)
+Scaffold the app (Vite + React + Tailwind + Framer Motion + routing), set up the design tokens (colors, type) as Tailwind theme extensions.
+Build the preloader + hero section exactly as described above, with placeholder images, so I can review the signature moment first.
+Build out Home's remaining sections, Photography and Videography pages.
+Build the backend: database schema, upload endpoint, token-based gallery route, expiry logic.
+Wire up Google Drive OAuth + copy-to-Drive flow.
+Build the admin dashboard last.
+
+Please pause after step 2 (hero + preloader) so I can review it before you continue
