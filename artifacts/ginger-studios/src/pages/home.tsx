@@ -1,387 +1,340 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { ArrowRight, CheckCircle2, Play, HeartHandshake, Camera, Film, Star } from "lucide-react";
+import { motion, AnimatePresence, useInView } from "framer-motion";
+import { ArrowRight, Star } from "lucide-react";
 
-// Assets
 const weddingDetail = "/images/wedding-detail.jpg";
 const weddingBride = "/images/wedding-bride.jpg";
 const birthdayPortrait1 = "/images/birthday-portrait-1.jpg";
 const birthdayPortrait2 = "/images/birthday-portrait-2.jpg";
-const genWed1 = "/images/gen-wedding-1.jpg";
-const genWed2 = "/images/gen-wedding-2.jpg";
-const genBirth1 = "/images/gen-birthday-1.jpg";
-const genBrand1 = "/images/gen-brand-film-1.jpg";
 
-const heroSlides = [
-  { img: weddingBride, tag: "Weddings", title: "#BecomingTheKafidiya" },
-  { img: genWed1, tag: "Weddings", title: "Editorial Golden Hour" },
-  { img: birthdayPortrait1, tag: "Portraits", title: "Zarah's 25th" },
-  { img: genBrand1, tag: "Brand", title: "Cinematic Reel" },
-];
+function Counter({ end, suffix = "", label, decimals = 0 }: { end: number, suffix?: string, label: string, decimals?: number }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-50px" });
 
-const selectedWork = [
-  { id: 1, img: weddingDetail, category: "Weddings", title: "The Details" },
-  { id: 2, img: weddingBride, category: "Weddings", title: "A Short Story" },
-  { id: 3, img: birthdayPortrait2, category: "Portraits", title: "Jisola xo" },
-  { id: 4, img: genWed1, category: "Weddings", title: "Golden Hour Editorial" },
-  { id: 5, img: genBirth1, category: "Portraits", title: "Fashion Portrait" },
-  { id: 6, img: genWed2, category: "Weddings", title: "Rich Cultural Heritage" },
-];
-
-const services = [
-  { icon: HeartHandshake, title: "Weddings", desc: "A narrative of your most important day, crafted with love." },
-  { icon: Camera, title: "Portraits", desc: "Intimate, editorial-style portraits that capture your essence." },
-  { icon: Star, title: "Birthdays", desc: "Celebrate milestones with vibrant, timeless imagery." },
-  { icon: Film, title: "Brand Films", desc: "Cinematic visuals that tell your brand's unique story." },
-];
-
-const testimonials = [
-  { quote: "Every single picture felt like a movie. Ginger Studios didn't just take photos, they captured the actual feeling of our wedding day.", name: "Aisha & Tobi", service: "Wedding Photography" },
-  { quote: "The warmth in their lighting and their attention to detail is unmatched in Abeokuta. Highly highly recommend.", name: "Zarah", service: "Birthday Portraits" },
-  { quote: "Professional, creative, and delivered beyond our expectations. The brand film gave our business a whole new level of class.", name: "Elevate Boutique", service: "Brand Film" },
-];
-
-export default function Home() {
-  const prefersReducedMotion = useReducedMotion();
-  const [activeSlide, setActiveSlide] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
-  const [selectedImage, setSelectedImage] = useState<number | null>(null);
-
-  // Auto-advance hero carousel
   useEffect(() => {
-    if (isHovered) return;
-    const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % heroSlides.length);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [isHovered]);
+    if (!inView) return;
+    const duration = 1500;
+    const startTime = performance.now();
 
-  // Auto-advance testimonials
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
+    const animate = (time: number) => {
+      const elapsed = time - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+      setCount(easeOutQuart * end);
 
-  const handleDragEnd = (e: any, { offset, velocity }: any) => {
-    const swipe = offset.x;
-    if (swipe < -40) {
-      setActiveSlide((prev) => (prev + 1) % heroSlides.length);
-    } else if (swipe > 40) {
-      setActiveSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
-    }
-  };
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setCount(end);
+      }
+    };
+    requestAnimationFrame(animate);
+  }, [inView, end]);
 
-  const staggerVariants = {
-    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 20 },
-    visible: (i: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: { delay: i * 0.15, duration: 0.8, ease: [0.21, 0.47, 0.32, 0.98] }
-    })
+  return (
+    <div ref={ref} className="flex flex-col py-6 border-b border-[#211C17]/10">
+      <span className="font-serif text-5xl md:text-6xl text-[#211C17]">
+        {count.toFixed(decimals)}{suffix}
+      </span>
+      <span className="text-xs font-sans uppercase tracking-[0.2em] text-[#211C17]/60 mt-2 font-medium">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+const CARDS = [
+  { id: 1, src: weddingBride, cat: "WEDDINGS", title: "A Short Story of Love" },
+  { id: 2, src: weddingDetail, cat: "DETAILS", title: "The Details" },
+  { id: 3, src: birthdayPortrait1, cat: "PORTRAITS", title: "Zarah's 25th" },
+  { id: 4, src: birthdayPortrait2, cat: "EDITORIAL", title: "Jisola Studio Session" }
+];
+
+function CardStack() {
+  const [frontId, setFrontId] = useState(CARDS[0].id);
+  
+  const frontIndex = CARDS.findIndex(c => c.id === frontId);
+  const orderedCards = [...CARDS.slice(frontIndex), ...CARDS.slice(0, frontIndex)];
+
+  const next = () => {
+    setFrontId(orderedCards[1].id);
   };
 
   return (
-    <div className="w-full flex flex-col">
-      {/* HERO SECTION */}
-      <section className="relative min-h-[calc(100vh-80px)] flex items-center justify-center overflow-hidden px-6 py-12 md:py-20">
-        <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-8 items-center">
+    <div className="flex flex-col items-center">
+      <div className="relative w-[340px] md:w-[380px] h-[480px] md:h-[520px] cursor-pointer" onClick={next}>
+        {orderedCards.map((c, i) => {
+          const isTop = i === 0;
+          const rotations = [0, -8, -3, 3, 8];
+          const rotation = isTop ? 0 : rotations[i % rotations.length];
           
-          {/* Left Column - Copy */}
-          <div className="flex flex-col z-10 order-2 lg:order-1">
-            <motion.span 
-              custom={0} initial="hidden" animate="visible" variants={staggerVariants}
-              className="text-[11px] font-sans text-primary tracking-[0.15em] uppercase font-bold mb-6 block"
+          return (
+            <motion.div
+              key={c.id}
+              layout
+              initial={false}
+              animate={{ 
+                scale: isTop ? 1 : 1 - (i * 0.04),
+                y: isTop ? 0 : i * 12,
+                rotate: rotation,
+                zIndex: CARDS.length - i
+              }}
+              whileHover={isTop ? { scale: 1.02, y: -8 } : {}}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="absolute inset-0 rounded-xl overflow-hidden shadow-2xl bg-[#211C17]"
+              style={{
+                boxShadow: isTop ? "0 30px 60px -12px rgba(0,0,0,0.6)" : "0 10px 30px -10px rgba(0,0,0,0.4)"
+              }}
             >
-              Abeokuta — Photography & Film
-            </motion.span>
-            
-            <motion.h1 
-              custom={1} initial="hidden" animate="visible" variants={staggerVariants}
-              className="font-serif text-5xl md:text-7xl lg:text-[72px] leading-[1.1] text-foreground mb-6"
-            >
-              We capture <em className="text-primary italic font-light">love</em> in every frame
-            </motion.h1>
-            
-            <motion.p 
-              custom={2} initial="hidden" animate="visible" variants={staggerVariants}
-              className="font-sans text-lg md:text-xl text-muted-foreground mb-10 max-w-lg leading-relaxed"
-            >
-              Step into a beautifully lit space where your most important moments are intentionally crafted and perfectly preserved.
-            </motion.p>
-            
-            <motion.div custom={3} initial="hidden" animate="visible" variants={staggerVariants} className="flex flex-wrap items-center gap-6 mb-12">
-              <Link href="/photography" className="group relative inline-flex items-center justify-center bg-primary text-primary-foreground px-8 py-4 text-base font-medium overflow-hidden transition-all hover:bg-primary/90">
-                <span className="relative z-10 flex items-center gap-2">
-                  View the portfolio
-                  <motion.span className="inline-block" whileHover={{ x: 5 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
-                    <ArrowRight size={18} />
-                  </motion.span>
-                </span>
-              </Link>
-              
-              <Link href="/videography" className="flex items-center gap-2 text-muted-foreground hover:text-foreground font-medium transition-colors border-b border-transparent hover:border-foreground pb-1">
-                <Play size={16} className="fill-current" /> Showreel, 45s
-              </Link>
-            </motion.div>
-            
-            <motion.div custom={4} initial="hidden" animate="visible" variants={staggerVariants} className="flex items-center gap-3 text-xs md:text-sm font-sans text-muted-foreground">
-              <span>240+ weddings shot</span>
-              <span className="text-border">|</span>
-              <span>3 mo gallery access</span>
-              <span className="text-border">|</span>
-              <span className="flex items-center gap-1">4.9 <Star size={12} className="fill-primary text-primary" /> rating</span>
-            </motion.div>
-          </div>
-
-          {/* Right Column - Phone Mockup */}
-          <div className="relative flex justify-center items-center h-full order-1 lg:order-2">
-            <motion.div 
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.8, ease: "easeOut" }}
-              className="relative w-full max-w-[280px] md:max-w-[320px] aspect-[9/19]"
-            >
-              {/* Amber Glow Behind */}
-              <motion.div 
-                className="absolute inset-0 bg-primary/20 blur-[80px] rounded-full"
-                animate={{ opacity: [0.5, 0.8, 0.5], scale: [1, 1.05, 1] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              />
-
-              {/* Floating Chips */}
-              <motion.div 
-                animate={{ y: [-8, 8, -8] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -right-12 top-20 z-20 bg-card border border-border shadow-xl px-4 py-2.5 rounded-lg flex items-center gap-2"
-              >
-                <span className="text-xs font-semibold text-foreground">New gallery ready</span>
-                <CheckCircle2 size={16} className="text-green-500" />
-              </motion.div>
-
-              <motion.div 
-                animate={{ y: [8, -8, 8] }}
-                transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                className="absolute -left-12 bottom-32 z-20 bg-card border border-border shadow-xl px-4 py-2.5 rounded-lg flex items-center gap-2"
-              >
-                <span className="text-xs font-semibold text-foreground">Saved to Drive</span>
-                <CheckCircle2 size={16} className="text-blue-500" />
-              </motion.div>
-
-              {/* Phone Frame */}
-              <div className="absolute inset-0 bg-[#1a1a1a] rounded-[40px] shadow-2xl overflow-hidden border-[6px] border-[#2a2a2a] ring-1 ring-border/20 z-10 flex flex-col relative">
-                {/* Notch */}
-                <div className="absolute top-0 inset-x-0 h-6 flex justify-center z-30">
-                  <div className="w-1/3 h-full bg-[#1a1a1a] rounded-b-xl"></div>
-                </div>
-
-                {/* Screen Content - Carousel */}
-                <div 
-                  className="flex-1 w-full h-full relative overflow-hidden bg-black"
-                  onMouseEnter={() => setIsHovered(true)}
-                  onMouseLeave={() => setIsHovered(false)}
-                >
-                  <AnimatePresence initial={false} mode="wait">
-                    <motion.div
-                      key={activeSlide}
-                      className="absolute inset-0 cursor-grab active:cursor-grabbing"
-                      drag="x"
-                      dragConstraints={{ left: 0, right: 0 }}
-                      onDragEnd={handleDragEnd}
-                      initial={{ opacity: 0, x: 50 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -50 }}
-                      transition={{ duration: 0.4, ease: "easeInOut" }}
-                    >
-                      <img 
-                        src={heroSlides[activeSlide].img} 
-                        alt={heroSlides[activeSlide].title} 
-                        className="w-full h-full object-cover"
-                        draggable={false}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
-                      
-                      {/* Lower Third Overlay */}
-                      <div className="absolute bottom-0 inset-x-0 p-6 flex flex-col gap-1 pointer-events-none">
-                        <span className="text-[10px] font-bold tracking-wider text-white/80 uppercase">{heroSlides[activeSlide].tag}</span>
-                        <span className="text-white font-serif text-lg">{heroSlides[activeSlide].title}</span>
-                      </div>
-                      
-                      {/* Top Right Pill */}
-                      <div className="absolute top-8 right-4 bg-white/20 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full text-[10px] text-white font-medium uppercase tracking-wider">
-                        Reel
-                      </div>
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-              </div>
-
-              {/* Dot Indicators */}
-              <div className="absolute -bottom-8 inset-x-0 flex justify-center gap-2">
-                {heroSlides.map((_, i) => (
-                  <button 
-                    key={i} 
-                    onClick={() => setActiveSlide(i)}
-                    className={`w-2 h-2 rounded-full transition-all ${i === activeSlide ? "bg-primary w-6" : "bg-border hover:bg-muted-foreground"}`}
-                  />
-                ))}
+              <img src={c.src} alt={c.title} className="w-full h-full object-cover" draggable={false} />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#211C17]/90 via-[#211C17]/20 to-transparent" />
+              <div className={`absolute bottom-8 left-8 right-8 transition-opacity duration-300 ${isTop ? 'opacity-100' : 'opacity-0'}`}>
+                <div className="text-[#F0961B] text-[10px] font-bold tracking-[0.2em] uppercase mb-3">{c.cat}</div>
+                <div className="text-[#FBF6EE] font-serif text-3xl leading-tight">{c.title}</div>
               </div>
             </motion.div>
-          </div>
+          )
+        })}
+      </div>
+      <div className="mt-12 flex flex-col items-center gap-6">
+        <div className="flex gap-2">
+          {CARDS.map((c) => (
+            <div key={c.id} className={`h-1.5 rounded-full transition-all duration-500 ${c.id === frontId ? 'w-8 bg-[#F0961B]' : 'w-2 bg-[#F0961B]/20'}`} />
+          ))}
         </div>
-      </section>
+        <p className="text-[#F0961B] text-[10px] uppercase tracking-[0.3em] font-bold animate-pulse">Tap to browse ↓</p>
+      </div>
+    </div>
+  )
+}
 
-      {/* SELECTED WORK */}
-      <section className="py-24 bg-card border-t border-border">
-        <div className="max-w-7xl mx-auto px-6">
+const SERVICES = [
+  { id: "01", title: "Weddings", desc: "A full cinematic narrative of your most important day — from getting ready to the last dance." },
+  { id: "02", title: "Portraits", desc: "Intimate, editorial portraits that strip away the noise and reveal what makes you genuinely you." },
+  { id: "03", title: "Celebrations", desc: "Birthdays, graduations, milestones — every celebration deserves a record this vivid." },
+  { id: "04", title: "Brand Films", desc: "Cinematic motion pictures that give your business a new level of credibility and class." }
+];
+
+const TESTIMONIALS = [
+  { quote: "Every single picture felt like a movie. Ginger Studios didn't just take photos — they captured the actual feeling of our wedding day.", name: "Aisha & Tobi", rating: 5 },
+  { quote: "The warmth in their lighting and attention to detail is unmatched. They made me feel like a star at my own birthday session.", name: "Zarah", rating: 5 },
+  { quote: "Professional, creative, and delivered beyond our expectations. The brand film gave our business a whole new level of class.", name: "Elevate Boutique", rating: 5 },
+];
+
+export default function Home() {
+  const heroWords = "Moments captured forever.".split(" ");
+  const quoteWords = "We believe every moment has a rhythm. Our job is to catch it.".split(" ");
+
+  return (
+    <div className="w-full flex flex-col bg-[#FBF6EE]">
+      {/* ══ HERO ══════════════════════════════════════════════════════════ */}
+      <section className="relative min-h-[calc(100vh-96px)] flex flex-col lg:flex-row overflow-hidden">
+        {/* Dot grid background */}
+        <div 
+          className="absolute inset-0 pointer-events-none opacity-10 z-0" 
+          style={{ backgroundImage: 'radial-gradient(#211C17 1.5px, transparent 1.5px)', backgroundSize: '32px 32px' }} 
+        />
+
+        {/* Left Side: Dramatic Image Reveal */}
+        <div className="w-full lg:w-[60%] relative h-[50vh] lg:h-auto z-10 p-4 lg:p-8 pr-4 lg:pr-0">
           <motion.div 
-            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-100px" }}
-            className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6"
+            initial={{ clipPath: "inset(100% 0 0 0 round 16px)" }}
+            animate={{ clipPath: "inset(0 0 0 0 round 16px)" }}
+            transition={{ duration: 1.4, ease: [0.76, 0, 0.24, 1] }}
+            className="relative w-full h-full overflow-hidden rounded-2xl"
           >
-            <div>
-              <h2 className="font-serif text-4xl text-foreground mb-4">Selected Work</h2>
-              <p className="text-muted-foreground font-sans max-w-md">A curated collection of our favorite moments across weddings, portraits, and films.</p>
+            <img src={weddingBride} alt="Cinematic Bride" className="w-full h-full object-cover" />
+            
+            {/* Amber grain noise overlay */}
+            <div 
+              className="absolute inset-0 mix-blend-overlay opacity-30 pointer-events-none bg-[#F0961B]" 
+              style={{ filter: "url(#noiseFilter)" }} 
+            />
+            <svg className="hidden">
+              <filter id="noiseFilter">
+                <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
+              </filter>
+            </svg>
+
+            {/* Large 01 */}
+            <div className="absolute top-4 lg:top-10 right-8 lg:right-10 text-[25vw] lg:text-[15vw] leading-none font-serif text-[#FBF6EE] opacity-20 pointer-events-none select-none">
+              01
             </div>
-            <Link href="/photography" className="inline-flex items-center gap-2 text-primary font-medium hover:text-primary/80 transition-colors">
-              View full gallery <ArrowRight size={16} />
-            </Link>
-          </motion.div>
 
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
-            {selectedWork.map((work, i) => (
-              <motion.div 
-                key={work.id}
-                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                className="relative group overflow-hidden bg-muted break-inside-avoid cursor-pointer rounded-sm"
-                onClick={() => setSelectedImage(work.id)}
-              >
-                <motion.img 
-                  layoutId={`image-${work.id}`}
-                  src={work.img} 
-                  alt={work.title} 
-                  className="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-700" 
-                />
-                <div className="absolute inset-0 bg-background/0 group-hover:bg-background/80 transition-colors duration-300 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 p-6 text-center">
-                  <span className="text-xs uppercase tracking-widest text-primary font-bold mb-2">{work.category}</span>
-                  <h3 className="font-serif text-xl text-foreground">{work.title}</h3>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Lightbox Modal */}
-      <AnimatePresence>
-        {selectedImage !== null && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 md:p-12 cursor-pointer"
-            onClick={() => setSelectedImage(null)}
-          >
-            <div className="relative max-w-5xl w-full h-full flex items-center justify-center cursor-default" onClick={e => e.stopPropagation()}>
-              {selectedWork.map(work => work.id === selectedImage && (
-                <motion.img 
-                  key={work.id}
-                  layoutId={`image-${work.id}`}
-                  src={work.img} 
-                  alt={work.title} 
-                  className="max-w-full max-h-full object-contain"
-                />
-              ))}
-              <button onClick={() => setSelectedImage(null)} className="absolute top-4 right-4 text-white hover:text-primary transition-colors">
-                <span className="sr-only">Close</span>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* SERVICES STRIP */}
-      <section className="py-24 bg-background">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {services.map((service, i) => (
-              <motion.div 
-                key={service.title}
-                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                className="flex flex-col p-8 bg-card border border-border hover:border-primary/30 transition-colors group"
-              >
-                <div className="w-12 h-12 bg-background border border-border flex items-center justify-center rounded-full mb-6 group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-colors text-foreground">
-                  <service.icon size={24} />
-                </div>
-                <h3 className="font-serif text-2xl text-foreground mb-3">{service.title}</h3>
-                <p className="text-muted-foreground font-sans leading-relaxed">{service.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* STUDIO STORY */}
-      <section className="py-32 bg-secondary text-secondary-foreground relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay pointer-events-none"></div>
-        <div className="max-w-7xl mx-auto px-6 relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-          <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
-            <blockquote className="font-serif text-3xl md:text-5xl italic leading-tight text-primary">
-              "We believe that every person, every couple, and every brand has a unique rhythm. Our job is to catch it before it fades."
-            </blockquote>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="space-y-6 text-secondary-foreground/80 font-sans text-lg">
-            <p>
-              Based in the heart of Abeokuta, Ginger Studios & Creatives was born from a desire to elevate visual storytelling in Nigeria. We are more than just a camera and a lens; we are a warm, intentional space where memories are treated as art.
-            </p>
-            <p>
-              Whether we are shooting a quiet portrait session, a grand traditional wedding, or a sleek brand film, our approach remains the same: genuine connection, cinematic lighting, and a relentless pursuit of the perfect frame.
-            </p>
-            <div className="pt-6">
-              <Link href="/contact" className="inline-block border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors px-8 py-3 font-medium uppercase tracking-widest text-sm">
-                Get in touch
-              </Link>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* TESTIMONIALS */}
-      <section className="py-32 bg-background border-t border-border">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <motion.span initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} className="text-xs uppercase tracking-[0.2em] font-bold text-primary mb-6 block">Client Love</motion.span>
-          
-          <div className="relative h-[250px] md:h-[200px] flex items-center justify-center">
-            <AnimatePresence mode="wait">
+            {/* Ticker */}
+            <div className="absolute bottom-6 left-0 w-full overflow-hidden whitespace-nowrap text-[#F0961B] text-xs md:text-sm tracking-[0.2em] uppercase font-bold flex bg-[#211C17]/40 backdrop-blur-md py-4">
               <motion.div
-                key={activeTestimonial}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.5 }}
-                className="absolute inset-0 flex flex-col items-center justify-center"
+                 animate={{ x: ["0%", "-50%"] }}
+                 transition={{ repeat: Infinity, ease: "linear", duration: 20 }}
+                 className="flex"
               >
-                <p className="font-serif text-2xl md:text-4xl text-foreground leading-snug mb-8">
-                  "{testimonials[activeTestimonial].quote}"
-                </p>
-                <div className="flex flex-col items-center">
-                  <span className="font-sans font-semibold text-foreground uppercase tracking-wider text-sm">{testimonials[activeTestimonial].name}</span>
-                  <span className="text-sm text-muted-foreground mt-1">{testimonials[activeTestimonial].service}</span>
-                </div>
+                 <span className="px-4">WEDDINGS · PORTRAITS · EVENTS · BRAND FILMS · CELEBRATIONS · </span>
+                 <span className="px-4">WEDDINGS · PORTRAITS · EVENTS · BRAND FILMS · CELEBRATIONS · </span>
               </motion.div>
-            </AnimatePresence>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Right Side: Typography & Stats */}
+        <div className="w-full lg:w-[40%] flex flex-col justify-center px-8 lg:px-16 py-16 lg:py-0 z-10">
+          <h1 className="font-serif text-6xl md:text-7xl lg:text-[5.5rem] leading-[1.05] text-[#211C17] mb-16 max-w-lg">
+            {heroWords.map((word, i) => (
+              <span key={i} className="inline-block overflow-hidden mr-[0.25em] mb-2">
+                <motion.span
+                  initial={{ y: "100%" }}
+                  animate={{ y: 0 }}
+                  transition={{ delay: 0.5 + (i * 0.1), duration: 0.8, ease: [0.33, 1, 0.68, 1] }}
+                  className="inline-block"
+                >
+                  {word}
+                </motion.span>
+              </span>
+            ))}
+          </h1>
+
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4 mb-16 max-w-sm">
+            <div className="col-span-2">
+              <Counter end={240} suffix="+" label="Shoots Delivered" />
+            </div>
+            <Counter end={4.9} decimals={1} suffix="★" label="Client Rating" />
+            <Counter end={7} label="Categories" />
           </div>
 
-          <div className="flex justify-center gap-3 mt-12">
-            {testimonials.map((_, i) => (
-              <button 
-                key={i} 
-                onClick={() => setActiveTestimonial(i)}
-                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${i === activeTestimonial ? "bg-primary scale-125" : "bg-border hover:bg-muted-foreground"}`}
-              />
+          <div className="flex flex-col gap-6 items-start">
+            <Link href="/photography" className="group flex items-center gap-4 text-[#211C17] font-serif text-2xl italic hover:text-[#F0961B] transition-colors">
+              <span className="w-12 h-[1px] bg-current transform origin-left group-hover:scale-x-150 transition-transform" />
+              View Photography
+            </Link>
+            <Link href="/videography" className="group flex items-center gap-4 text-[#211C17] font-serif text-2xl italic hover:text-[#F0961B] transition-colors">
+              <span className="w-12 h-[1px] bg-current transform origin-left group-hover:scale-x-150 transition-transform" />
+              Watch Reels
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ MARQUEE ════════════════════════════════════════════════════════ */}
+      <div className="w-full bg-[#5C1A20] py-10 overflow-hidden flex items-center">
+        <motion.div animate={{ x: ["0%", "-50%"] }} transition={{ ease: "linear", duration: 30, repeat: Infinity }} className="flex whitespace-nowrap">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="text-[#F0961B] text-2xl md:text-3xl px-6 flex items-center gap-8">
+              <span className="font-serif italic tracking-wide">WEDDING PHOTOGRAPHY</span> <span className="text-xl opacity-30">·</span>
+              <span className="font-sans uppercase font-bold tracking-[0.2em] text-lg">BIRTHDAY PORTRAITS</span> <span className="text-xl opacity-30">·</span>
+              <span className="font-serif italic tracking-wide">BRAND FILMS</span> <span className="text-xl opacity-30">·</span>
+              <span className="font-sans uppercase font-bold tracking-[0.2em] text-lg">PORTRAIT SESSIONS</span> <span className="text-xl opacity-30">·</span>
+              <span className="font-serif italic tracking-wide">EVENT COVERAGE</span> <span className="text-xl opacity-30">·</span>
+              <span className="font-sans uppercase font-bold tracking-[0.2em] text-lg">GRADUATION PORTRAITS</span> <span className="text-xl opacity-30">·</span>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* ══ CARD STACK GALLERY ════════════════════════════════════════════ */}
+      <section className="py-32 md:py-48 bg-[#211C17] overflow-hidden">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
+          <motion.div 
+            initial={{ opacity: 0, x: -40 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.9, ease: "easeOut" }}
+            className="flex justify-center lg:justify-start order-2 lg:order-1"
+          >
+            <CardStack />
+          </motion.div>
+
+          <div className="flex flex-col order-1 lg:order-2">
+            <h2 className="font-serif text-5xl md:text-7xl lg:text-[80px] leading-[1.05] text-[#FBF6EE] mb-10">
+              Every frame is a <span className="text-[#F0961B] italic font-light">feeling</span>, not just a photo.
+            </h2>
+            <p className="font-sans text-lg md:text-xl text-[#FBF6EE]/60 max-w-lg leading-relaxed font-light">
+              We approach every session as an editorial feature. No stiff poses. No forced smiles. Just genuine connection, masterfully lit and thoughtfully curated to last lifetimes.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ SERVICES ══════════════════════════════════════════════════════ */}
+      <section className="py-32 md:py-40 bg-[#211C17] border-t border-[#FBF6EE]/5">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="flex overflow-x-auto md:grid md:grid-cols-4 gap-6 px-6 lg:px-12 pb-12 md:pb-0 snap-x hide-scrollbar">
+            {SERVICES.map((s, i) => (
+              <motion.div 
+                key={s.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ delay: i * 0.1, duration: 0.7 }}
+                className="min-w-[300px] md:min-w-0 flex-shrink-0 snap-start relative bg-[#26211C] p-10 md:p-12 rounded-2xl group hover:bg-[#2A241F] transition-colors duration-500 overflow-hidden border border-white/5"
+              >
+                <div className="absolute top-6 right-6 text-[120px] leading-[0.8] font-serif text-[#F0961B] opacity-[0.08] pointer-events-none select-none transition-transform duration-700 group-hover:scale-110 group-hover:-translate-y-2">
+                  {s.id}
+                </div>
+                <div className="h-32 md:h-48" />
+                <h3 className="text-[#FBF6EE] font-serif text-4xl mb-6 relative z-10">{s.title}</h3>
+                <p className="text-[#FBF6EE]/60 font-sans text-base leading-relaxed mb-10 relative z-10 font-light">{s.desc}</p>
+                <div className="w-0 h-[2px] bg-[#F0961B] group-hover:w-full transition-all duration-700 ease-out relative z-10" />
+              </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ══ STUDIO QUOTE ══════════════════════════════════════════════════ */}
+      <section className="bg-[#5C1A20] py-40 md:py-56 px-6 relative overflow-hidden">
+        {/* Large decorative quote mark */}
+        <div className="absolute -top-10 left-10 md:left-32 font-serif text-[#FBF6EE]/5 pointer-events-none select-none text-[300px] leading-none">
+          "
+        </div>
+        
+        <div className="max-w-[1000px] mx-auto text-center relative z-10">
+          <h2 className="font-serif italic text-[#FBF6EE] text-5xl md:text-7xl lg:text-[90px] leading-[1.1]">
+            {quoteWords.map((w, i) => (
+              <motion.span 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ delay: i * 0.08, duration: 0.9, ease: [0.21, 0.47, 0.32, 0.98] }}
+                className="inline-block mr-[0.25em] mb-2 md:mb-4"
+                key={i}
+              >
+                {w}
+              </motion.span>
+            ))}
+          </h2>
+        </div>
+      </section>
+
+      {/* ══ TESTIMONIALS ══════════════════════════════════════════════════ */}
+      <section className="py-32 md:py-48 bg-[#FBF6EE] overflow-hidden">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 mb-20 flex flex-col md:flex-row justify-between items-end gap-6">
+          <div>
+            <h2 className="font-serif text-5xl md:text-7xl text-[#211C17]">Client Stories</h2>
+          </div>
+          <div className="flex gap-1 text-[#F0961B] mb-2 md:mb-4">
+            {[...Array(5)].map((_, i) => <Star key={i} size={28} fill="currentColor" />)}
+          </div>
+        </div>
+        
+        <div className="flex overflow-x-auto gap-10 px-6 lg:px-12 pb-16 snap-x hide-scrollbar">
+          {TESTIMONIALS.map((t, i) => (
+            <motion.div 
+              key={i}
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ delay: i * 0.15, duration: 0.8 }}
+              className="min-w-[340px] md:min-w-[480px] w-[85vw] md:w-[480px] flex-shrink-0 snap-center border border-[#211C17]/10 p-12 lg:p-16 bg-white rounded-2xl"
+            >
+              <div className="flex gap-1 text-[#F0961B] mb-10">
+                {[...Array(t.rating)].map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
+              </div>
+              <p className="font-serif italic text-2xl md:text-3xl text-[#211C17] leading-relaxed mb-12">"{t.quote}"</p>
+              <div className="w-16 h-[2px] bg-[#F0961B] mb-6" />
+              <p className="font-sans text-xs font-bold tracking-[0.25em] uppercase text-[#211C17]">{t.name}</p>
+            </motion.div>
+          ))}
         </div>
       </section>
     </div>
