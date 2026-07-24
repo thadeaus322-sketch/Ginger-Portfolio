@@ -43,33 +43,33 @@ function Preloader({ onComplete }: { onComplete: () => void }) {
 
 export function PublicLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const [hasSeenPreloader, setHasSeenPreloader] = useState(true);
-  const [isPreloaderActive, setIsPreloaderActive] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
-  useEffect(() => {
-    const seen = sessionStorage.getItem("hasSeenPreloader");
-    if (!seen && location === "/") {
-      setHasSeenPreloader(false);
-      setIsPreloaderActive(true);
+  // Show preloader once per browser session on the home page
+  const [showPreloader, setShowPreloader] = useState(() => {
+    try {
+      return !sessionStorage.getItem("hasSeenPreloader");
+    } catch {
+      return false;
     }
-  }, [location]);
+  });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Only show on "/" — hide immediately if navigating away without completing
+  const shouldShow = showPreloader && location === "/";
 
   const handlePreloaderComplete = () => {
-    sessionStorage.setItem("hasSeenPreloader", "true");
-    setIsPreloaderActive(false);
+    try { sessionStorage.setItem("hasSeenPreloader", "true"); } catch {}
+    setShowPreloader(false);
   };
 
   const navLinks = [
     { label: "Photography", href: "/photography" },
     { label: "Videography", href: "/videography" },
-    { label: "Client Gallery", href: "/gallery" },
   ];
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#FBF6EE] selection:bg-[#F0961B]/20 selection:text-[#211C17]">
       <AnimatePresence>
-        {!hasSeenPreloader && isPreloaderActive && (
+        {shouldShow && (
           <Preloader key="preloader" onComplete={handlePreloaderComplete} />
         )}
       </AnimatePresence>
@@ -144,7 +144,6 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
             <ul className="space-y-5 text-white/60 font-sans text-sm tracking-wider">
               <li><Link href="/photography" className="hover:text-white transition-colors">Photography</Link></li>
               <li><Link href="/videography" className="hover:text-white transition-colors">Videography</Link></li>
-              <li><Link href="/gallery" className="hover:text-white transition-colors">Client Galleries</Link></li>
             </ul>
           </div>
           <div>

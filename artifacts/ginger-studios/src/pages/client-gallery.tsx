@@ -120,13 +120,33 @@ export default function ClientGallery() {
             <p className="text-muted-foreground text-sm mt-1">High resolution ready for download</p>
           </div>
           <div className="flex items-center gap-4">
-            <button disabled className="group relative flex items-center gap-2 px-5 py-2.5 border border-border text-foreground hover:bg-muted transition-colors rounded-sm opacity-50 cursor-not-allowed">
-              <Cloud size={18} /> Drive
-              <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-foreground text-background text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Coming soon</span>
-            </button>
-            <button disabled className="group relative flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-sm opacity-50 cursor-not-allowed">
-              <Download size={18} /> Download All
-              <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-foreground text-background text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Coming soon</span>
+            <a
+              href={`https://drive.google.com`}
+              target="_blank"
+              rel="noreferrer"
+              className="group relative flex items-center gap-2 px-5 py-2.5 border border-border text-foreground hover:bg-muted transition-colors rounded-sm"
+              title="Save photos to Google Drive (open Drive to upload)"
+            >
+              <Cloud size={18} /> Save to Drive
+            </a>
+            <button
+              onClick={() => {
+                gallery.imageUrls.forEach((url, i) => {
+                  setTimeout(() => {
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `${gallery.shootTitle.replace(/[^a-z0-9]/gi, "-")}-${i + 1}.jpg`;
+                    a.target = "_blank";
+                    a.rel = "noreferrer";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                  }, i * 250);
+                });
+              }}
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-sm font-medium"
+            >
+              <Download size={18} /> Download All ({gallery.imageUrls.length})
             </button>
           </div>
         </div>
