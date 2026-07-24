@@ -1,518 +1,610 @@
 import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform, useInView } from "framer-motion";
 
 const VIDEO_SRC = "/images/client-video-1.mp4";
 
 const PROJECTS = [
-  { id: 1, title: "The Kafidiyas",       cat: "Wedding Film",     duration: "4:20", year: "2025", src: VIDEO_SRC, frame: "001" },
-  { id: 2, title: "Elevate Boutique",    cat: "Brand Commercial", duration: "1:45", year: "2025", src: null,      frame: "002" },
-  { id: 3, title: "South Kitchen",       cat: "Commercial Shoot", duration: "2:10", year: "2024", src: null,      frame: "003" },
-  { id: 4, title: "The Archers Evening", cat: "Event Highlight",  duration: "3:10", year: "2025", src: null,      frame: "004" },
-  { id: 5, title: "Jisola 30th",         cat: "Birthday Reel",    duration: "1:15", year: "2025", src: null,      frame: "005" },
-  { id: 6, title: "Aisha & Tobi",        cat: "Wedding Film",     duration: "5:20", year: "2024", src: null,      frame: "006" },
+  { id: 1, frame: "001", title: "The Kafidiyas",       sub: "A Short Story of an Unending Love", cat: "Wedding Film",     duration: "4:20", year: "2025", src: VIDEO_SRC },
+  { id: 2, frame: "002", title: "Elevate Boutique",    sub: "Dressed in confidence",              cat: "Brand Commercial", duration: "1:45", year: "2025", src: null },
+  { id: 3, frame: "003", title: "South Kitchen",       sub: "Food is an emotion",                 cat: "Commercial",       duration: "2:10", year: "2024", src: null },
+  { id: 4, frame: "004", title: "The Archers Evening", sub: "An evening worth remembering",        cat: "Event Highlight",  duration: "3:10", year: "2025", src: null },
+  { id: 5, frame: "005", title: "Jisola 30th",         sub: "Thirty and thriving",                cat: "Birthday Reel",    duration: "1:15", year: "2025", src: null },
+  { id: 6, frame: "006", title: "Aisha & Tobi",        sub: "Where two worlds meet",              cat: "Wedding Film",     duration: "5:20", year: "2024", src: null },
 ];
 
-// ─── Film grain overlay ───────────────────────────────────────────────────────
-function Grain() {
-  return (
-    <>
-      <svg className="hidden">
-        <defs>
-          <filter id="noise" x="0%" y="0%" width="100%" height="100%" colorInterpolationFilters="linearRGB">
-            <feTurbulence type="fractalNoise" baseFrequency="0.80" numOctaves="4" seed="2" stitchTiles="stitch" result="noise" />
-            <feColorMatrix type="saturate" values="0" in="noise" result="grey" />
-            <feBlend in="SourceGraphic" in2="grey" mode="overlay" result="blend" />
-            <feComposite in="blend" in2="SourceGraphic" operator="in" />
-          </filter>
-        </defs>
-      </svg>
-      <motion.div
-        className="absolute inset-0 pointer-events-none z-10 opacity-[0.28]"
-        style={{ filter: "url(#noise)" }}
-        animate={{ opacity: [0.22, 0.32, 0.22] }}
-        transition={{ repeat: Infinity, duration: 0.12, ease: "linear" }}
-      >
-        <div className="w-full h-full bg-[#111]" />
-      </motion.div>
-    </>
-  );
-}
+const WORD_VARIANTS = {
+  hidden: { y: "110%", opacity: 0 },
+  visible: (i: number) => ({
+    y: 0, opacity: 1,
+    transition: { delay: i * 0.13, duration: 0.75, ease: [0.16, 1, 0.3, 1] },
+  }),
+};
 
-// ─── Scanlines ────────────────────────────────────────────────────────────────
-function Scanlines() {
+// ─── Animated headline ────────────────────────────────────────────────────────
+function AnimHeadline({ text, className, delayStart = 0 }: { text: string; className?: string; delayStart?: number }) {
+  const words = text.split(" ");
   return (
-    <div
-      className="absolute inset-0 pointer-events-none z-10 opacity-20"
-      style={{
-        backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.4) 3px, rgba(0,0,0,0.4) 4px)",
-      }}
-    />
-  );
-}
-
-// ─── Film perforations strip ───────────────────────────────────────────────────
-function FilmPerfs({ side = "left", count = 18 }: { side?: "left" | "right"; count?: number }) {
-  return (
-    <div className={`absolute top-0 bottom-0 ${side === "left" ? "left-0" : "right-0"} w-10 z-20 bg-black flex flex-col justify-around items-center py-4`}>
-      {[...Array(count)].map((_, i) => (
-        <div key={i} className="w-5 h-7 rounded-[3px] bg-[#0d0d0e] border border-[#2a2a2a]" />
+    <span className={className} aria-label={text}>
+      {words.map((word, i) => (
+        <span key={i} className="inline-block overflow-hidden mr-[0.22em] mb-1">
+          <motion.span
+            className="inline-block"
+            custom={delayStart + i}
+            variants={WORD_VARIANTS}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            {word}
+          </motion.span>
+        </span>
       ))}
-    </div>
+    </span>
   );
 }
 
-// ─── Custom play cursor ───────────────────────────────────────────────────────
-function PlayCursor() {
-  const [pos, setPos] = useState({ x: -100, y: -100 });
-  const [hovering, setHovering] = useState(false);
-
-  useEffect(() => {
-    const move = (e: MouseEvent) => setPos({ x: e.clientX, y: e.clientY });
-    const over = (e: MouseEvent) => setHovering(!!(e.target as HTMLElement).closest(".project-card"));
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseover", over);
-    return () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseover", over); };
-  }, []);
-
-  return (
-    <motion.div
-      className="fixed top-0 left-0 pointer-events-none z-[200] flex items-center justify-center mix-blend-difference"
-      animate={{ x: pos.x - 36, y: pos.y - 36, opacity: hovering ? 1 : 0, scale: hovering ? 1 : 0.3 }}
-      transition={{ type: "spring", stiffness: 500, damping: 30, mass: 0.4 }}
-    >
-      <div className="w-[72px] h-[72px] rounded-full bg-[#F0961B] flex items-center justify-center">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z" /></svg>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── Video hero ───────────────────────────────────────────────────────────────
+// ─── Video Hero ───────────────────────────────────────────────────────────────
 function VideoHero({ onWatch }: { onWatch: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end start"] });
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.play().catch(() => {});
-    }
+    const v = videoRef.current;
+    if (!v) return;
+    v.play().catch(() => {});
   }, []);
 
   return (
-    <section className="relative w-full overflow-hidden" style={{ height: "100svh" }}>
-      {/* Perforations on both sides */}
-      <FilmPerfs side="left" count={20} />
-      <FilmPerfs side="right" count={20} />
+    <section ref={containerRef} className="relative w-full overflow-hidden" style={{ height: "100svh", minHeight: 600 }}>
 
-      {/* Video background */}
-      <div className="absolute inset-x-10 inset-y-0 overflow-hidden bg-black">
+      {/* Parallax video layer */}
+      <motion.div className="absolute inset-0" style={{ y }}>
         <video
           ref={videoRef}
           src={VIDEO_SRC}
-          muted
-          loop
-          playsInline
-          preload="auto"
-          className="w-full h-full object-cover opacity-60"
+          muted loop playsInline preload="auto"
+          className="w-full h-full object-cover"
         />
-        {/* Cinematic vignette */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black opacity-70" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/50" />
-      </div>
+        {/* Subtle vignette — keeps text readable without killing the video */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-black/60 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/25 via-transparent to-transparent pointer-events-none" />
+      </motion.div>
 
-      {/* Letterbox bars */}
-      <div className="absolute top-0 inset-x-10 h-[8vh] bg-black z-20" />
-      <div className="absolute bottom-0 inset-x-10 h-[8vh] bg-black z-20" />
+      {/* Dark bg visible only before video loads */}
+      <div className="absolute inset-0 bg-[#1a100a] -z-10" />
 
-      <Grain />
-      <Scanlines />
-
-      {/* REC indicator */}
+      {/* REC pill */}
       <motion.div
-        className="absolute top-[10vh] left-[72px] z-30 flex items-center gap-2"
-        animate={{ opacity: [1, 0, 1] }}
-        transition={{ repeat: Infinity, duration: 1.6, ease: "linear" }}
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="absolute top-8 left-8 z-20 flex items-center gap-2 bg-black/40 backdrop-blur-sm border border-white/10 px-3 py-1.5 rounded-full"
       >
-        <div className="w-2 h-2 rounded-full bg-[#F0961B]" />
-        <span className="text-white/70 font-mono text-[10px] tracking-[0.25em]">REC</span>
+        <motion.div
+          className="w-2 h-2 rounded-full bg-[#F0961B]"
+          animate={{ opacity: [1, 0.2, 1] }}
+          transition={{ repeat: Infinity, duration: 1.4 }}
+        />
+        <span className="font-mono text-[9px] text-white/70 tracking-[0.25em] uppercase">REC • GVS 2025</span>
       </motion.div>
 
       {/* Frame counter */}
-      <div className="absolute top-[10vh] right-[72px] z-30 font-mono text-[10px] text-white/40 tracking-[0.2em] flex flex-col items-end gap-1">
-        <span>001 / 006</span>
-        <span className="text-[8px]">GVS · ISO 800</span>
-      </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.8 }}
+        className="absolute top-8 right-8 z-20 font-mono text-[10px] text-white/40 tracking-widest"
+      >
+        001 / 006
+      </motion.div>
 
-      {/* Hero text */}
-      <div className="absolute inset-x-10 top-0 bottom-0 flex flex-col justify-center px-16 lg:px-28 z-30">
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
+      {/* Hero copy */}
+      <motion.div
+        className="absolute inset-0 z-10 flex flex-col justify-center px-8 md:px-16 lg:px-24"
+        style={{ opacity }}
+      >
+        <p className="font-mono text-[#F0961B] text-[10px] tracking-[0.45em] uppercase mb-6">
+          Ginger Studios · Motion
+        </p>
+
+        <h1 className="font-serif text-white leading-[0.9] tracking-tight mb-8 overflow-hidden"
+          style={{ fontSize: "clamp(64px, 10vw, 148px)" }}>
+          {"We make".split(" ").map((word, i) => (
+            <span key={i} className="inline-block overflow-hidden mr-[0.22em]">
+              <motion.span
+                className="inline-block"
+                initial={{ y: "110%", opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 + i * 0.13, duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+              >
+                {word}
+              </motion.span>
+            </span>
+          ))}
+          <br />
+          <span className="inline-block overflow-hidden">
+            <motion.span
+              className="inline-block text-[#F0961B] italic"
+              initial={{ y: "110%", opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.48, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            >
+              films.
+            </motion.span>
+          </span>
+        </h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-          className="relative"
+          transition={{ delay: 0.7, duration: 0.8 }}
+          className="font-serif italic text-white/50 text-xl md:text-2xl max-w-md mb-12"
         >
-          <div className="text-[#F0961B] font-mono text-[10px] tracking-[0.4em] mb-6 uppercase">
-            Ginger Studios · Motion Films
-          </div>
-          <h1 className="font-serif text-white leading-[0.92] tracking-tight"
-            style={{ fontSize: "clamp(60px, 11vw, 160px)" }}>
-            We make<br />
-            <em className="not-italic text-[#F0961B]">films.</em>
-          </h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.9 }}
-            className="mt-8 font-serif italic text-white/40 text-xl md:text-3xl max-w-md"
-          >
-            Every frame. Every feeling. Every second — preserved.
-          </motion.p>
-        </motion.div>
+          Every frame, a feeling. Every second, preserved.
+        </motion.p>
 
         {/* Watch CTA */}
         <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.9, duration: 0.8 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1, duration: 0.7 }}
           onClick={onWatch}
-          className="mt-14 w-fit group flex items-center gap-5 text-white"
+          className="group w-fit flex items-center gap-4"
         >
-          <div className="w-16 h-16 rounded-full border border-[#F0961B]/50 flex items-center justify-center group-hover:bg-[#F0961B] group-hover:border-[#F0961B] transition-all duration-500">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+          <motion.div
+            className="w-14 h-14 rounded-full bg-[#F0961B] flex items-center justify-center"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z" /></svg>
+          </motion.div>
+          <div className="text-left">
+            <p className="text-white font-serif text-lg group-hover:text-[#F0961B] transition-colors">
+              Watch The Kafidiyas
+            </p>
+            <p className="text-white/40 font-mono text-[10px] tracking-widest">WEDDING FILM · 4:20</p>
           </div>
-          <span className="font-serif text-lg group-hover:text-[#F0961B] transition-colors">
-            Watch The Kafidiyas — 4:20
-          </span>
         </motion.button>
-      </div>
+      </motion.div>
 
-      {/* Scroll indicator */}
+      {/* Scroll hint */}
       <motion.div
-        className="absolute bottom-[10vh] left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-3"
-        animate={{ y: [0, 8, 0] }}
-        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.4 }}
       >
-        <div className="w-[1px] h-12 bg-gradient-to-b from-transparent via-[#F0961B] to-transparent" />
-        <span className="font-mono text-[9px] text-white/30 tracking-[0.3em] uppercase">Scroll</span>
+        <motion.div
+          className="w-px h-10 bg-gradient-to-b from-[#F0961B] to-transparent"
+          animate={{ scaleY: [0, 1, 0], originY: 0 }}
+          transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
+        />
+        <span className="font-mono text-[8px] text-white/30 tracking-[0.3em] uppercase">Scroll</span>
       </motion.div>
     </section>
   );
 }
 
-// ─── Pure CSS film strip (no images) ─────────────────────────────────────────
-function FilmStrip() {
-  const frames = [
-    "WEDDING · 2025", "BRAND FILM · 2025", "COMMERCIAL · 2024",
-    "EVENT · 2025", "PORTRAIT · 2025", "BIRTHDAY · 2025",
-    "WEDDING · 2024", "BRAND FILM · 2024", "COMMERCIAL · 2025",
-    "EVENT · 2024", "PORTRAIT · 2024", "BIRTHDAY · 2024",
-  ];
+// ─── Featured film card (cream bg, video visible) ────────────────────────────
+function FeaturedFilm({ onWatch }: { onWatch: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const previewRef = useRef<HTMLVideoElement>(null);
+  const [hovered, setHovered] = useState(false);
 
-  const doubled = [...frames, ...frames];
+  // Autoplay muted from mount so the video is always visible
+  useEffect(() => {
+    const v = previewRef.current;
+    if (!v) return;
+    v.play().catch(() => {});
+  }, []);
 
   return (
-    <section className="relative w-full overflow-hidden bg-black border-y border-[#1a1a1a] my-16 lg:my-28">
-      {/* Top perforations */}
-      <div className="w-full h-9 bg-[#111] border-b border-[#222] flex items-center justify-around px-2">
+    <section className="bg-[#FBF6EE] py-24 lg:py-40 px-8 md:px-16 lg:px-24 overflow-hidden">
+      <div className="max-w-[1400px] mx-auto">
+        {/* Section label */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="flex items-center gap-4 mb-16"
+        >
+          <div className="w-10 h-px bg-[#F0961B]" />
+          <span className="font-mono text-[10px] text-[#211C17]/50 tracking-[0.35em] uppercase">
+            Featured Film · 001
+          </span>
+        </motion.div>
+
+        <div ref={ref} className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          {/* Video player */}
+          <motion.div
+            initial={{ opacity: 0, x: -40 }}
+            animate={inView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            className="relative aspect-video bg-[#211C17] rounded-2xl overflow-hidden cursor-pointer group shadow-[0_32px_80px_-16px_rgba(33,28,23,0.35)]"
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            onClick={onWatch}
+          >
+            <video
+              ref={previewRef}
+              src={VIDEO_SRC}
+              muted loop playsInline preload="metadata"
+              className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105"
+            />
+            {/* Dark scrim */}
+            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700" />
+
+            {/* Play button */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <motion.div
+                className="w-20 h-20 rounded-full bg-[#F0961B] flex items-center justify-center shadow-2xl"
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.95 }}
+                animate={{ scale: hovered ? 1.1 : 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              >
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="white">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </motion.div>
+            </div>
+
+            {/* Badge */}
+            <div className="absolute top-5 left-5 bg-[#F0961B] px-3 py-1 rounded-sm">
+              <span className="font-mono text-[9px] text-white tracking-[0.25em] uppercase font-bold">Wedding Film</span>
+            </div>
+            <div className="absolute bottom-5 right-5 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-sm border border-white/10">
+              <span className="font-mono text-[10px] text-white/80 tracking-widest">4:20</span>
+            </div>
+          </motion.div>
+
+          {/* Copy */}
+          <motion.div
+            initial={{ opacity: 0, x: 40 }}
+            animate={inView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <p className="font-mono text-[#F0961B] text-[10px] tracking-[0.4em] uppercase mb-5">2025</p>
+            <h2 className="font-serif text-[#211C17] text-5xl md:text-6xl leading-[1.05] mb-6">
+              The Kafidiyas
+            </h2>
+            <p className="font-serif italic text-[#211C17]/50 text-2xl mb-8">
+              A Short Story of an Unending Love
+            </p>
+            <p className="font-sans text-[#211C17]/60 text-base leading-relaxed mb-12 max-w-sm">
+              From a quiet morning in Abeokuta to a rooftop celebration under the stars — this is the full cinematic record of a love story that refused to be ordinary.
+            </p>
+
+            <div className="flex items-center gap-6 mb-12">
+              {[["Duration", "4:20"], ["Year", "2025"], ["Type", "Wedding"]].map(([k, v]) => (
+                <div key={k}>
+                  <p className="font-mono text-[8px] text-[#211C17]/40 tracking-[0.25em] uppercase mb-1">{k}</p>
+                  <p className="font-serif text-[#211C17] text-lg">{v}</p>
+                </div>
+              ))}
+            </div>
+
+            <motion.button
+              onClick={onWatch}
+              className="group flex items-center gap-3 bg-[#211C17] text-[#FBF6EE] px-8 py-4 rounded-sm font-sans text-sm tracking-[0.15em] uppercase font-bold hover:bg-[#F0961B] transition-colors duration-400"
+              whileHover={{ x: 4 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              Watch Full Film
+              <svg className="group-hover:translate-x-1 transition-transform" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </motion.button>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Film strip (CSS only) ────────────────────────────────────────────────────
+function FilmStrip() {
+  const items = [
+    "WEDDING · 2025", "BRAND FILM · 2025", "COMMERCIAL · 2024", "EVENT · 2025",
+    "PORTRAIT · 2025", "BIRTHDAY REEL · 2025", "WEDDING · 2024", "DOCUMENTARY · 2024",
+  ];
+  const doubled = [...items, ...items];
+
+  return (
+    <div className="w-full overflow-hidden bg-[#211C17] border-y border-[#FBF6EE]/5">
+      {/* Top sprockets */}
+      <div className="h-7 bg-[#111] flex items-center justify-around px-2">
         {[...Array(60)].map((_, i) => (
-          <div key={i} className="w-4 h-5 rounded-[2px] bg-black border border-[#333] flex-shrink-0" />
+          <div key={i} className="w-3.5 h-4 rounded-[2px] bg-[#211C17] border border-[#333] flex-shrink-0" />
         ))}
       </div>
 
-      {/* Scrolling film frames */}
-      <div className="relative overflow-hidden" style={{ height: "clamp(100px, 14vw, 180px)" }}>
+      <div className="relative overflow-hidden" style={{ height: 130 }}>
         <motion.div
           animate={{ x: ["0%", "-50%"] }}
-          transition={{ repeat: Infinity, ease: "linear", duration: 55 }}
-          className="flex h-full absolute top-0 left-0"
+          transition={{ repeat: Infinity, ease: "linear", duration: 50 }}
+          className="absolute top-0 left-0 flex h-full"
         >
           {doubled.map((label, i) => (
             <div
               key={i}
-              className="flex-shrink-0 h-full relative flex flex-col items-center justify-center border-r border-[#1e1e1e]"
-              style={{ width: "clamp(120px, 16vw, 200px)" }}
+              className="flex-shrink-0 h-full flex flex-col items-center justify-center border-r border-[#FBF6EE]/5 relative"
+              style={{ width: 170 }}
             >
-              {/* Frame grain */}
-              <div className="absolute inset-0 bg-[#0a0a0a] opacity-80" />
-              <div
-                className="absolute inset-0 opacity-10"
-                style={{
-                  backgroundImage: "radial-gradient(circle at 50% 50%, #F0961B 0.5px, transparent 0.5px)",
-                  backgroundSize: "8px 8px",
-                }}
-              />
-              {/* Frame number */}
-              <span className="relative z-10 font-mono text-[#F0961B]/20 text-3xl font-bold leading-none mb-1">
-                {String(i % 12 + 1).padStart(4, "0")}
+              {/* Warm amber tint frame */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#F0961B]/4 to-transparent" />
+              <span className="font-mono text-[#F0961B]/15 text-4xl font-bold mb-1">
+                {String((i % 8) + 1).padStart(4, "0")}
               </span>
-              <span className="relative z-10 font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase text-center px-2">
+              <span className="font-mono text-[9px] text-[#FBF6EE]/25 tracking-[0.2em] uppercase text-center px-2">
                 {label}
               </span>
-              {/* Scanline */}
-              <div className="absolute inset-0 pointer-events-none opacity-20"
-                style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.5) 2px, rgba(0,0,0,0.5) 3px)" }}
-              />
             </div>
           ))}
         </motion.div>
       </div>
 
-      {/* Bottom perforations */}
-      <div className="w-full h-9 bg-[#111] border-t border-[#222] flex items-center justify-around px-2">
+      {/* Bottom sprockets */}
+      <div className="h-7 bg-[#111] flex items-center justify-around px-2">
         {[...Array(60)].map((_, i) => (
-          <div key={i} className="w-4 h-5 rounded-[2px] bg-black border border-[#333] flex-shrink-0" />
+          <div key={i} className="w-3.5 h-4 rounded-[2px] bg-[#211C17] border border-[#333] flex-shrink-0" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Project grid ─────────────────────────────────────────────────────────────
+function ProjectsGrid({ onPlayVideo }: { onPlayVideo: (src: string) => void }) {
+  return (
+    <section className="bg-[#FBF6EE] py-24 lg:py-40 px-8 md:px-16 lg:px-24">
+      <div className="max-w-[1400px] mx-auto">
+
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20">
+          <h2 className="font-serif text-[#211C17] leading-tight"
+            style={{ fontSize: "clamp(40px, 6vw, 80px)" }}>
+            <AnimHeadline text="Our films." />
+          </h2>
+          <p className="font-sans text-[#211C17]/50 text-base max-w-xs leading-relaxed">
+            Six stories. Shot with intention. Delivered with care.
+          </p>
+        </div>
+
+        {/* Grid — skip first (featured above) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {PROJECTS.slice(1).map((p, i) => (
+            <motion.div
+              key={p.id}
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ delay: i * 0.1, duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+              className="group cursor-pointer"
+              onClick={() => p.src && onPlayVideo(p.src)}
+            >
+              {/* Card face */}
+              <div className="relative aspect-[4/3] bg-[#211C17] rounded-xl overflow-hidden mb-5">
+                {/* Warm gradient pattern */}
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: `radial-gradient(ellipse at ${20 + i * 15}% ${30 + i * 10}%, rgba(240,150,27,0.18) 0%, transparent 65%)`,
+                  }}
+                />
+                {/* Grid texture */}
+                <div className="absolute inset-0 opacity-[0.04]"
+                  style={{ backgroundImage: "linear-gradient(#FBF6EE 1px, transparent 1px), linear-gradient(90deg, #FBF6EE 1px, transparent 1px)", backgroundSize: "32px 32px" }}
+                />
+
+                {/* Frame number */}
+                <div className="absolute top-4 left-4 font-mono text-white/20 text-xs tracking-widest">{p.frame}</div>
+
+                {/* Category pill */}
+                <div className="absolute top-4 right-4 bg-[#F0961B]/15 border border-[#F0961B]/30 px-3 py-1 rounded-full">
+                  <span className="font-mono text-[8px] text-[#F0961B] tracking-[0.25em] uppercase">{p.cat}</span>
+                </div>
+
+                {/* Center icon */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {p.src ? (
+                    <motion.div
+                      className="w-14 h-14 rounded-full border-2 border-[#F0961B]/40 group-hover:border-[#F0961B] group-hover:bg-[#F0961B]/10 flex items-center justify-center transition-colors duration-500"
+                      whileHover={{ scale: 1.15 }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z" /></svg>
+                    </motion.div>
+                  ) : (
+                    <div className="w-14 h-14 rounded-full border border-white/10 flex items-center justify-center">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5">
+                        <circle cx="12" cy="12" r="10" /><path d="M12 8v4l3 3" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+
+                {/* Amber hover glow */}
+                <motion.div
+                  className="absolute inset-0 pointer-events-none rounded-xl"
+                  initial={{ opacity: 0 }}
+                  whileHover={{ opacity: 1 }}
+                  style={{ boxShadow: "inset 0 0 60px rgba(240,150,27,0.10)" }}
+                />
+
+                {/* Duration bottom */}
+                <div className="absolute bottom-4 right-4 font-mono text-xs text-white/35 tracking-widest">{p.duration}</div>
+              </div>
+
+              {/* Card text */}
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="font-serif text-[#211C17] text-2xl group-hover:text-[#F0961B] transition-colors duration-400 mb-1">
+                    {p.title}
+                  </h3>
+                  <p className="font-serif italic text-[#211C17]/40 text-sm">{p.sub}</p>
+                </div>
+                <span className="font-mono text-[9px] text-[#211C17]/30 tracking-widest mt-1.5">{p.year}</span>
+              </div>
+
+              {/* Underline reveal */}
+              <motion.div
+                className="h-px bg-[#F0961B] mt-4 origin-left"
+                initial={{ scaleX: 0 }}
+                whileHover={{ scaleX: 1 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              />
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Services marquee ─────────────────────────────────────────────────────────
+function ServicesMarquee() {
+  const items = ["Wedding Films", "Brand Commercials", "Event Highlights", "Birthday Reels", "Product Videos", "Documentaries"];
+  return (
+    <div className="w-full bg-[#5C1A20] py-14 overflow-hidden border-y border-white/5">
+      <motion.div
+        animate={{ x: ["0%", "-50%"] }}
+        transition={{ repeat: Infinity, ease: "linear", duration: 35 }}
+        className="flex whitespace-nowrap"
+      >
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="flex items-center px-6 gap-10 text-[#FBF6EE] text-3xl md:text-4xl font-serif italic">
+            {items.map((s, j) => (
+              <span key={j} className="flex items-center gap-10">
+                {s}
+                <span className="text-[#F0961B] opacity-40 not-italic">·</span>
+              </span>
+            ))}
+          </div>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Stats section ────────────────────────────────────────────────────────────
+function Stats() {
+  const stats = [
+    { num: "100+", label: "Films Delivered" },
+    { num: "240+", label: "Happy Clients" },
+    { num: "4.9★", label: "Client Rating" },
+    { num: "7",    label: "Years Shooting" },
+  ];
+  return (
+    <section className="bg-[#211C17] py-24 px-8 md:px-16 lg:px-24">
+      <div className="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-px bg-[#FBF6EE]/5">
+        {stats.map((s, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: i * 0.1, duration: 0.7 }}
+            className="flex flex-col items-center justify-center py-16 bg-[#211C17] group hover:bg-[#261F1A] transition-colors"
+          >
+            <span className="font-serif text-5xl md:text-6xl text-[#F0961B] mb-3">{s.num}</span>
+            <span className="font-mono text-[9px] text-[#FBF6EE]/40 tracking-[0.3em] uppercase">{s.label}</span>
+          </motion.div>
         ))}
       </div>
     </section>
   );
 }
 
-// ─── Project card ─────────────────────────────────────────────────────────────
-function ProjectCard({ project, index, onClick }: { project: typeof PROJECTS[0]; index: number; onClick: () => void }) {
-  const isFeatured = index === 0;
+// ─── Fullscreen modal player ──────────────────────────────────────────────────
+function VideoModal({ src, onClose }: { src: string; onClose: () => void }) {
+  const project = PROJECTS.find(p => p.src === src);
+
+  useEffect(() => {
+    const fn = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, [onClose]);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 60 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ delay: (index % 2) * 0.12, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-      className={`project-card group cursor-pointer ${isFeatured ? "md:col-span-2" : ""}`}
-      onClick={onClick}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4 }}
+      className="fixed inset-0 z-[300] flex items-center justify-center bg-black"
     >
-      {/* Aspect container */}
-      <div
-        className={`relative w-full overflow-hidden bg-[#080808] border border-[#1a1a1a] group-hover:border-[#F0961B]/30 transition-all duration-700 ${isFeatured ? "aspect-video" : "aspect-[4/3]"}`}
+      {/* Letterbox bars */}
+      <motion.div
+        className="absolute top-0 left-0 right-0 bg-black z-10 origin-top"
+        initial={{ scaleY: 1 }}
+        animate={{ scaleY: 0 }}
+        transition={{ delay: 0.2, duration: 0.5, ease: [0.76, 0, 0.24, 1] }}
+        style={{ height: "12vh" }}
+      />
+      <motion.div
+        className="absolute bottom-0 left-0 right-0 bg-black z-10 origin-bottom"
+        initial={{ scaleY: 1 }}
+        animate={{ scaleY: 0 }}
+        transition={{ delay: 0.2, duration: 0.5, ease: [0.76, 0, 0.24, 1] }}
+        style={{ height: "12vh" }}
+      />
+
+      <video
+        key={src}
+        src={src}
+        controls autoPlay
+        className="w-full h-full object-contain"
+      />
+
+      {/* Close */}
+      <button
+        onClick={onClose}
+        className="absolute top-5 right-6 z-20 w-10 h-10 rounded-full border border-white/20 hover:bg-white/10 flex items-center justify-center text-white transition-colors"
       >
-        {/* If featured and has src, show live silent video */}
-        {isFeatured && project.src && (
-          <video
-            src={project.src}
-            muted
-            loop
-            playsInline
-            autoPlay
-            className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-70 scale-105 group-hover:scale-100 transition-all duration-[2s] ease-out"
-          />
-        )}
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      </button>
 
-        {/* Dark cinematic overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-transparent to-black/90 z-10" />
-
-        {/* Film grain always on */}
-        <div
-          className="absolute inset-0 z-10 opacity-20 pointer-events-none"
-          style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.3) 2px, rgba(0,0,0,0.3) 3px)" }}
-        />
-
-        {/* Dot texture for non-featured */}
-        {!isFeatured && (
-          <div
-            className="absolute inset-0 opacity-5"
-            style={{ backgroundImage: "radial-gradient(circle at 50% 50%, #F0961B 0.8px, transparent 0.8px)", backgroundSize: "12px 12px" }}
-          />
-        )}
-
-        {/* Frame number top-left */}
-        <div className="absolute top-5 left-5 z-20 font-mono text-white/20 text-sm tracking-widest">
-          {project.frame}
-        </div>
-
-        {/* Category top-right */}
-        <div className="absolute top-5 right-5 z-20 bg-black/60 backdrop-blur-sm px-3 py-1.5 border border-white/10">
-          <span className="font-mono text-[8px] uppercase tracking-[0.3em] text-[#F0961B]">{project.cat}</span>
-        </div>
-
-        {/* Play ring */}
-        <div className="absolute inset-0 z-20 flex items-center justify-center">
-          <motion.div
-            className="relative"
-            initial={{ opacity: 0.4, scale: 0.9 }}
-            whileHover={{ opacity: 1, scale: 1 }}
-          >
-            {project.src ? (
-              <div className={`${isFeatured ? "w-24 h-24" : "w-16 h-16"} rounded-full border border-[#F0961B]/40 group-hover:border-[#F0961B] group-hover:bg-[#F0961B]/10 flex items-center justify-center transition-all duration-500`}>
-                <svg width={isFeatured ? 28 : 18} height={isFeatured ? 28 : 18} viewBox="0 0 24 24" fill="white">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </div>
-            ) : (
-              <div className={`${isFeatured ? "w-24 h-24" : "w-16 h-16"} rounded-full border border-white/10 flex items-center justify-center`}>
-                <svg width={isFeatured ? 22 : 16} height={isFeatured ? 22 : 16} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M9 12h6M12 9v6"/>
-                </svg>
-              </div>
-            )}
-          </motion.div>
-        </div>
-
-        {/* Duration bottom-right */}
-        <div className="absolute bottom-5 right-5 z-20 font-mono text-xs tracking-widest text-white/40">
-          {project.duration}
-        </div>
-
-        {/* Amber hover glow */}
+      {/* Info bar */}
+      {project && (
         <motion.div
-          className="absolute inset-0 z-10 pointer-events-none"
-          initial={{ opacity: 0 }}
-          whileHover={{ opacity: 1 }}
-          style={{ boxShadow: "inset 0 0 120px rgba(240,150,27,0.07)" }}
-        />
-      </div>
-
-      {/* Card footer */}
-      <div className="mt-6 flex items-end justify-between">
-        <div>
-          <h3 className={`font-serif text-white group-hover:text-[#F0961B] transition-colors duration-500 leading-tight ${isFeatured ? "text-4xl md:text-5xl" : "text-2xl md:text-3xl"}`}>
-            {project.title}
-          </h3>
-          <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-white/30 mt-2">
-            {project.src ? "Watch film" : "Film coming soon"} · {project.year}
-          </p>
-        </div>
-
-        {/* Arrow indicator */}
-        <motion.div
-          className="text-[#F0961B]/30 group-hover:text-[#F0961B] transition-colors mb-1"
-          animate={{ x: 0 }}
-          whileHover={{ x: 4 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="absolute bottom-5 left-8 z-20 flex items-center gap-5"
         >
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-            <path d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
+          <span className="font-mono text-[9px] text-[#F0961B] tracking-[0.3em] uppercase">{project.cat}</span>
+          <span className="font-serif text-white/60 text-sm">{project.title}</span>
+          <span className="font-mono text-[9px] text-white/30">{project.frame} / 006</span>
         </motion.div>
-      </div>
+      )}
     </motion.div>
   );
 }
 
-// ─── Main page ─────────────────────────────────────────────────────────────────
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Videography() {
-  const [activeVideo, setActiveVideo] = useState<typeof PROJECTS[0] | null>(null);
-
-  const handleCardClick = (project: typeof PROJECTS[0]) => {
-    if (project.src) setActiveVideo(project);
-  };
+  const [playingSrc, setPlayingSrc] = useState<string | null>(null);
 
   return (
-    <div className="w-full flex flex-col bg-black min-h-screen overflow-hidden">
-      <PlayCursor />
-
-      {/* ══ VIDEO HERO ═════════════════════════════════════════════════════════ */}
-      <VideoHero onWatch={() => setActiveVideo(PROJECTS[0])} />
-
-      {/* ══ CSS FILM STRIP ════════════════════════════════════════════════════ */}
+    <div className="w-full flex flex-col bg-[#FBF6EE] overflow-hidden">
+      <VideoHero onWatch={() => setPlayingSrc(VIDEO_SRC)} />
+      <FeaturedFilm onWatch={() => setPlayingSrc(VIDEO_SRC)} />
       <FilmStrip />
+      <ProjectsGrid onPlayVideo={setPlayingSrc} />
+      <Stats />
+      <ServicesMarquee />
 
-      {/* ══ INTRO TEXT ════════════════════════════════════════════════════════ */}
-      <section className="max-w-[1400px] mx-auto px-10 lg:px-20 w-full pb-16">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.9 }}
-          className="flex flex-col lg:flex-row items-start gap-12 lg:gap-24 border-b border-[#1a1a1a] pb-20"
-        >
-          <div className="lg:w-[55%]">
-            <p className="font-mono text-[#F0961B] text-[10px] tracking-[0.4em] uppercase mb-6">Our Work</p>
-            <h2 className="font-serif text-white text-5xl md:text-7xl leading-[1.05] tracking-tight">
-              Six films.<br />
-              <span className="text-white/25">Six stories.</span>
-            </h2>
-          </div>
-          <div className="lg:w-[45%] flex flex-col justify-end pt-4">
-            <p className="font-serif italic text-white/40 text-xl leading-relaxed">
-              From the quiet joy of a birthday morning to the grand entrance of a wedding — we approach every shoot with the gravity of cinema. No filters. No faking. Just real moments, beautifully told.
-            </p>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ══ PROJECTS GRID ════════════════════════════════════════════════════ */}
-      <section className="max-w-[1400px] mx-auto px-10 lg:px-20 w-full pb-24 lg:pb-40">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-20">
-          {PROJECTS.map((project, i) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              index={i}
-              onClick={() => handleCardClick(project)}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* ══ MARQUEE SERVICES ══════════════════════════════════════════════════ */}
-      <div className="w-full bg-[#5C1A20] py-16 lg:py-20 overflow-hidden border-y border-white/5">
-        <motion.div animate={{ x: ["0%", "-50%"] }} transition={{ ease: "linear", duration: 40, repeat: Infinity }} className="flex whitespace-nowrap">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="text-[#FBF6EE] text-4xl md:text-5xl px-10 flex items-center gap-12 font-serif italic">
-              <span>Wedding Films</span> <span className="text-[#F0961B] opacity-40">·</span>
-              <span>Brand Commercials</span> <span className="text-[#F0961B] opacity-40">·</span>
-              <span>Event Highlights</span> <span className="text-[#F0961B] opacity-40">·</span>
-              <span>Birthday Reels</span> <span className="text-[#F0961B] opacity-40">·</span>
-              <span>Product Videos</span> <span className="text-[#F0961B] opacity-40">·</span>
-            </div>
-          ))}
-        </motion.div>
-      </div>
-
-      {/* ══ FULLSCREEN MODAL PLAYER ═══════════════════════════════════════════ */}
       <AnimatePresence>
-        {activeVideo && (
-          <motion.div
-            key="modal"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="fixed inset-0 z-[300] bg-black"
-          >
-            {/* Letterbox entrance bars */}
-            <motion.div initial={{ scaleY: 1 }} animate={{ scaleY: 0 }} transition={{ delay: 0.3, duration: 0.6, ease: [0.76, 0, 0.24, 1] }} className="absolute top-0 left-0 right-0 bg-black z-20 origin-top" style={{ height: "15vh" }} />
-            <motion.div initial={{ scaleY: 1 }} animate={{ scaleY: 0 }} transition={{ delay: 0.3, duration: 0.6, ease: [0.76, 0, 0.24, 1] }} className="absolute bottom-0 left-0 right-0 bg-black z-20 origin-bottom" style={{ height: "15vh" }} />
-
-            {/* Grain on modal */}
-            <div className="absolute inset-0 z-10 opacity-10 pointer-events-none"
-              style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.4) 3px, rgba(0,0,0,0.4) 4px)" }}
-            />
-
-            {/* Video */}
-            <video
-              key={activeVideo.id}
-              src={activeVideo.src!}
-              controls
-              autoPlay
-              className="absolute inset-0 w-full h-full object-contain z-0"
-            />
-
-            {/* Film perfs */}
-            <div className="absolute left-0 top-0 bottom-0 w-8 z-30 bg-black flex flex-col justify-around items-center py-4">
-              {[...Array(14)].map((_, i) => <div key={i} className="w-4 h-5 rounded-[2px] bg-[#111] border border-[#2a2a2a]" />)}
-            </div>
-            <div className="absolute right-0 top-0 bottom-0 w-8 z-30 bg-black flex flex-col justify-around items-center py-4">
-              {[...Array(14)].map((_, i) => <div key={i} className="w-4 h-5 rounded-[2px] bg-[#111] border border-[#2a2a2a]" />)}
-            </div>
-
-            {/* Close button */}
-            <button
-              onClick={() => setActiveVideo(null)}
-              className="absolute top-6 right-12 z-40 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/60 transition-all"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
-
-            {/* Film info bottom bar */}
-            <div className="absolute bottom-4 left-12 right-12 z-40 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <span className="font-mono text-[9px] text-[#F0961B] tracking-[0.3em] uppercase">{activeVideo.cat}</span>
-                <span className="font-serif text-white/60 text-sm">{activeVideo.title}</span>
-              </div>
-              <span className="font-mono text-[9px] text-white/30 tracking-widest">{activeVideo.frame} / 006 · GVS</span>
-            </div>
-          </motion.div>
+        {playingSrc && (
+          <VideoModal key="modal" src={playingSrc} onClose={() => setPlayingSrc(null)} />
         )}
       </AnimatePresence>
     </div>

@@ -41,23 +41,19 @@ function Preloader({ onComplete }: { onComplete: () => void }) {
   );
 }
 
+// Module-level flag — resets on every hard page load, never on HMR or client nav
+let _preloaderDone = false;
+
 export function PublicLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  // Show preloader once per browser session on the home page
-  const [showPreloader, setShowPreloader] = useState(() => {
-    try {
-      return !sessionStorage.getItem("hasSeenPreloader");
-    } catch {
-      return false;
-    }
-  });
+  const [showPreloader, setShowPreloader] = useState(!_preloaderDone);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Only show on "/" — hide immediately if navigating away without completing
+  // Only show on the home route
   const shouldShow = showPreloader && location === "/";
 
   const handlePreloaderComplete = () => {
-    try { sessionStorage.setItem("hasSeenPreloader", "true"); } catch {}
+    _preloaderDone = true;
     setShowPreloader(false);
   };
 
