@@ -7,12 +7,12 @@ const birthdayPortrait1 = "/images/birthday-portrait-1.jpg";
 const birthdayPortrait2 = "/images/birthday-portrait-2.jpg";
 
 const VIDEOS = [
-  { id: 1, title: "The Kafidiyas", cat: "Wedding Reel", duration: "4:20", thumb: weddingBride },
-  { id: 2, title: "Elevate Boutique", cat: "Brand Film", duration: "1:45", thumb: weddingDetail },
-  { id: 3, title: "Evening Gala", cat: "Event Highlight", duration: "3:10", thumb: birthdayPortrait1 },
-  { id: 4, title: "Jisola 30th", cat: "Birthday Reel", duration: "1:15", thumb: birthdayPortrait2 },
-  { id: 5, title: "Lagos Fashion Week", cat: "Brand Film", duration: "2:30", thumb: weddingDetail },
-  { id: 6, title: "Aisha & Tobi", cat: "Wedding Reel", duration: "5:20", thumb: weddingBride },
+  { id: 1, title: "The Kafidiyas", cat: "Wedding Reel", duration: "4:20", thumb: weddingBride, src: "/images/client-video-1.mp4" },
+  { id: 2, title: "Elevate Boutique", cat: "Brand Film", duration: "1:45", thumb: weddingDetail, src: null },
+  { id: 3, title: "Evening Gala", cat: "Event Highlight", duration: "3:10", thumb: birthdayPortrait1, src: null },
+  { id: 4, title: "Jisola 30th", cat: "Birthday Reel", duration: "1:15", thumb: birthdayPortrait2, src: null },
+  { id: 5, title: "Lagos Fashion Week", cat: "Brand Film", duration: "2:30", thumb: weddingDetail, src: null },
+  { id: 6, title: "Aisha & Tobi", cat: "Wedding Reel", duration: "5:20", thumb: weddingBride, src: null },
 ];
 
 function VideoCursor() {
@@ -196,14 +196,29 @@ export default function Videography() {
             </button>
 
             <div className="w-full h-full flex items-center justify-center relative overflow-hidden group bg-black">
-               {/* Video placeholder */}
-               <img src={VIDEOS.find(v=>v.id===activeVideo)?.thumb} className="w-full h-full object-cover opacity-20 filter grayscale" />
-               <div className="absolute inset-0 flex flex-col items-center justify-center text-white/30">
-                  <span className="text-xs font-sans tracking-[0.3em] font-bold uppercase mb-6 opacity-40">Demo Player</span>
-                  <div className="w-24 h-24 border border-white/10 rounded-full flex items-center justify-center">
-                    <svg className="w-8 h-8 ml-1 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                  </div>
-               </div>
+               {(() => {
+                 const vid = VIDEOS.find(v => v.id === activeVideo);
+                 return vid?.src ? (
+                   <video
+                     key={vid.id}
+                     src={vid.src}
+                     controls
+                     autoPlay
+                     className="w-full h-full object-contain"
+                     style={{ maxHeight: "76vh" }}
+                   />
+                 ) : (
+                   <>
+                     <img src={vid?.thumb} className="w-full h-full object-cover opacity-20 filter grayscale" />
+                     <div className="absolute inset-0 flex flex-col items-center justify-center text-white/30">
+                       <span className="text-xs font-sans tracking-[0.3em] font-bold uppercase mb-6 opacity-40">Film coming soon</span>
+                       <div className="w-24 h-24 border border-white/10 rounded-full flex items-center justify-center">
+                         <svg className="w-8 h-8 ml-1 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                       </div>
+                     </div>
+                   </>
+                 );
+               })()}
             </div>
             <style>{`@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }`}</style>
           </motion.div>
