@@ -1,256 +1,366 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
-import { ArrowLeft, ArrowRight, X } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 
-const weddingDetail = "/images/wedding-detail.jpg";
-const weddingBride = "/images/wedding-bride.jpg";
-const birthdayPortrait1 = "/images/birthday-portrait-1.jpg";
-const birthdayPortrait2 = "/images/birthday-portrait-2.jpg";
-
-const CATEGORIES = ["All", "Events", "Food", "Products", "Portraits", "Weddings", "Grad", "Birthday"];
-
-const GRADIENT_STYLES = {
-  Events: { bg: "#0B192C", fg: "#F0961B" },
-  Food: { bg: "#232619", fg: "#FBF6EE" },
-  Products: { bg: "#1F2326", fg: "#FFFFFF" },
-  Grad: { bg: "#361B2B", fg: "#E6B8D6" },
-} as const;
-
-const PORTFOLIO = [
-  { id: 1, cat: "Weddings", src: weddingBride, title: "A Short Story of Love", tall: true },
-  { id: 2, cat: "Weddings", src: weddingDetail, title: "The Details", tall: false },
-  { id: 3, cat: "Portraits", src: birthdayPortrait2, title: "Jisola Studio Session", tall: true },
-  { id: 4, cat: "Birthday", src: birthdayPortrait1, title: "Zarah's 25th", tall: false },
-  { id: 5, cat: "Weddings", src: weddingBride, title: "Golden Hour", tall: false },
-  { id: 6, cat: "Portraits", src: birthdayPortrait1, title: "Soft Light Series", tall: false },
-  { id: 7, cat: "Birthday", src: birthdayPortrait2, title: "Glam Close Up", tall: true },
-  { id: 8, cat: "Events", gradient: "Events", title: "Evening Gala Highlight", tall: false },
-  { id: 9, cat: "Events", gradient: "Events", title: "Awards Night", tall: true },
-  { id: 10, cat: "Food", gradient: "Food", title: "Farm-to-Table", tall: false },
-  { id: 11, cat: "Food", gradient: "Food", title: "Menu Shoot", tall: true },
-  { id: 12, cat: "Products", gradient: "Products", title: "Studio Lookbook", tall: false },
-  { id: 13, cat: "Products", gradient: "Products", title: "Brand Launch", tall: true },
-  { id: 14, cat: "Grad", gradient: "Grad", title: "Class of 2026", tall: false },
-  { id: 15, cat: "Grad", gradient: "Grad", title: "Senior Portraits", tall: true },
+// ─── Category config ──────────────────────────────────────────────────────────
+const CATEGORIES = [
+  { id: "all",      label: "All",      accent: "#F0961B" },
+  { id: "weddings", label: "Weddings", accent: "#e85d75" },
+  { id: "portraits",label: "Portraits",accent: "#7c6de0" },
+  { id: "events",   label: "Events",   accent: "#38bdf8" },
+  { id: "food",     label: "Food",     accent: "#4ade80" },
+  { id: "products", label: "Products", accent: "#fb923c" },
+  { id: "birthday", label: "Birthday", accent: "#f472b6" },
 ];
 
-function GradientFill({ cat }: { cat: string }) {
-  const style = GRADIENT_STYLES[cat as keyof typeof GRADIENT_STYLES];
-  if (!style) return <div className="absolute inset-0 bg-[#211C17]" />;
+// ─── Portfolio data ───────────────────────────────────────────────────────────
+const PORTFOLIO = [
+  // Weddings
+  { id:  1, src: "/images/wedding-bride.jpg",     category: "weddings", title: "A Short Story of Love",      tall: true  },
+  { id:  2, src: "/images/wedding-detail.jpg",    category: "weddings", title: "The Details",               tall: false },
+
+  // Portraits
+  { id:  3, src: "/images/portrait-studio-1.jpg", category: "portraits",title: "Majestic in Her Own Way",    tall: true  },
+  { id:  4, src: "/images/birthday-portrait-2.jpg",category:"portraits",title: "Jisola Studio Session",     tall: false },
+
+  // Events
+  { id:  5, src: "/images/event-1.jpg",           category: "events",   title: "The Archers Evening",       tall: true  },
+  { id:  6, src: "/images/event-2.jpg",           category: "events",   title: "Christmas at The Archers",  tall: false },
+  { id:  7, src: "/images/event-4.jpg",           category: "events",   title: "Arriving in Style",         tall: false },
+  { id:  8, src: "/images/event-5.jpg",           category: "events",   title: "The Art Hotel",             tall: false },
+
+  // Food
+  { id:  9, src: "/images/food-1.jpg",            category: "food",     title: "Fufu & Egusi",              tall: false },
+  { id: 10, src: "/images/food-2.jpg",            category: "food",     title: "Feast of the Season",       tall: true  },
+  { id: 11, src: "/images/food-3.jpg",            category: "food",     title: "Jollof & Suya",             tall: false },
+  { id: 12, src: "/images/food-4.jpg",            category: "food",     title: "The Full Plate",            tall: false },
+  { id: 13, src: "/images/food-5.jpg",            category: "food",     title: "Grilled Wings Board",       tall: false },
+  { id: 14, src: "/images/food-6.jpg",            category: "food",     title: "Ribs & Fries",              tall: true  },
+
+  // Products
+  { id: 15, src: "/images/product-1.jpg",         category: "products", title: "OkunRiin Men's Skincare",   tall: true  },
+  { id: 16, src: "/images/product-2.jpg",         category: "products", title: "Hair Care Series",          tall: false },
+  { id: 17, src: "/images/product-3.jpg",         category: "products", title: "Hair Softener — Single",   tall: false },
+
+  // Birthday
+  { id: 18, src: "/images/birthday-portrait-1.jpg",category:"birthday", title: "Zarah's 25th",             tall: true  },
+  { id: 19, src: "/images/birthday-portrait-2.jpg",category:"birthday", title: "Jisola xo",                tall: false },
+];
+
+type Item = typeof PORTFOLIO[number];
+
+function getCatMeta(id: string) {
+  return CATEGORIES.find(c => c.id === id) ?? CATEGORIES[0];
+}
+
+// ─── Gallery Card ─────────────────────────────────────────────────────────────
+function GalleryCard({ item, onClick }: { item: Item; onClick: () => void }) {
+  const cat = getCatMeta(item.category);
   return (
-    <div className="absolute inset-0 overflow-hidden" style={{ backgroundColor: style.bg }}>
-      {cat === 'Events' && <div className="absolute inset-0 opacity-20" style={{ backgroundImage: `radial-gradient(circle at 2px 2px, ${style.fg} 1.5px, transparent 0)`, backgroundSize: '24px 24px' }} />}
-      {cat === 'Food' && <div className="absolute inset-0 opacity-10 mix-blend-overlay" style={{ filter: "url(#noiseFilter)" }} />}
-      {cat === 'Products' && <div className="absolute inset-0 opacity-10" style={{ backgroundImage: `linear-gradient(45deg, ${style.fg} 1px, transparent 1px)`, backgroundSize: '16px 16px' }} />}
-      {cat === 'Grad' && <div className="absolute inset-0 opacity-20" style={{ backgroundImage: `radial-gradient(${style.fg} 2px, transparent 2px)`, backgroundSize: '48px 48px' }} />}
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.93 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.88 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="relative group overflow-hidden break-inside-avoid cursor-pointer"
+      style={{ borderRadius: 14, marginBottom: 18 }}
+      onClick={onClick}
+    >
+      <img
+        src={item.src}
+        alt={item.title}
+        className="w-full object-cover"
+        style={{ display: "block", aspectRatio: item.tall ? "3/4" : "4/3" }}
+        loading="lazy"
+      />
+
+      {/* Hover overlay */}
+      <div
+        className="absolute inset-0 flex flex-col justify-end p-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{ background: "linear-gradient(to top, rgba(33,28,23,0.92) 0%, rgba(33,28,23,0.2) 55%, transparent 100%)" }}
+      >
+        <span className="text-[10px] uppercase tracking-[0.2em] font-bold mb-1.5 block" style={{ color: cat.accent }}>
+          {cat.label}
+        </span>
+        <h3 className="font-serif text-base text-white leading-tight">{item.title}</h3>
+      </div>
+
+      {/* Category dot */}
+      <div className="absolute top-3 left-3 w-2 h-2 rounded-full" style={{ background: cat.accent }} />
+    </motion.div>
+  );
+}
+
+// ─── Category Card Stack ──────────────────────────────────────────────────────
+function CategoryCardStack({ items }: { items: Item[] }) {
+  const [front, setFront] = useState(0);
+  const total = items.length;
+
+  if (total === 0) return (
+    <div className="text-center py-24 text-muted-foreground">
+      <p className="font-serif text-2xl mb-2">Coming soon</p>
+      <p className="text-sm">We're adding more work in this category.</p>
+    </div>
+  );
+
+  const next = () => setFront(i => (i + 1) % total);
+  const prev = () => setFront(i => (i - 1 + total) % total);
+
+  const orderedItems = Array.from({ length: Math.min(total, 4) }, (_, i) => items[(front + i) % total]);
+
+  return (
+    <div className="flex flex-col items-center py-16">
+      <div
+        className="relative cursor-pointer select-none"
+        style={{ width: "min(500px, 90vw)", height: "min(660px, 85vw)" }}
+        onClick={next}
+      >
+        {orderedItems.map((item, i) => {
+          const isTop = i === 0;
+          const rotations = [0, -6, -2, 4];
+          return (
+            <motion.div
+              key={item.id}
+              layout
+              initial={false}
+              animate={{
+                scale: 1 - i * 0.035,
+                y: i * 18,
+                rotate: isTop ? 0 : rotations[i],
+                zIndex: 4 - i,
+              }}
+              whileHover={isTop ? { scale: 1.02, y: -10 } : {}}
+              transition={{ type: "spring", stiffness: 260, damping: 26 }}
+              className="absolute inset-0 rounded-2xl overflow-hidden"
+              style={{
+                boxShadow: isTop
+                  ? "0 40px 80px -12px rgba(33,28,23,0.5), 0 0 0 1px rgba(240,150,27,0.1)"
+                  : "0 10px 30px -8px rgba(33,28,23,0.3)",
+              }}
+            >
+              <img src={item.src} alt={item.title} className="w-full h-full object-cover" draggable={false} />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#211C17]/90 via-transparent to-transparent" />
+              {isTop && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="absolute bottom-10 left-10 right-10"
+                >
+                  <p className="text-[#F0961B] text-[11px] font-bold tracking-[0.22em] uppercase mb-3">
+                    {getCatMeta(item.category).label}
+                  </p>
+                  <p className="text-white font-serif text-3xl leading-tight">{item.title}</p>
+                  <p className="text-white/40 text-xs uppercase tracking-[0.2em] mt-4 font-bold">
+                    {front + 1} / {total} — Tap to browse
+                  </p>
+                </motion.div>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Navigation */}
+      <div className="flex items-center gap-6 mt-16">
+        <button
+          onClick={prev}
+          className="w-12 h-12 rounded-full border border-[#211C17]/20 flex items-center justify-center hover:bg-[#F0961B] hover:border-[#F0961B] hover:text-white transition-all"
+        >
+          <ChevronLeft size={20} />
+        </button>
+        <div className="flex gap-2">
+          {items.map((_, i) => (
+            <motion.div
+              key={i}
+              animate={{ width: i === front ? 24 : 6, background: i === front ? "#F0961B" : "#211C1730" }}
+              className="h-1.5 rounded-full cursor-pointer"
+              onClick={() => setFront(i)}
+            />
+          ))}
+        </div>
+        <button
+          onClick={next}
+          className="w-12 h-12 rounded-full border border-[#211C17]/20 flex items-center justify-center hover:bg-[#F0961B] hover:border-[#F0961B] hover:text-white transition-all"
+        >
+          <ChevronRight size={20} />
+        </button>
+      </div>
     </div>
   );
 }
 
-function CategoryStack({ items, openLightbox }: { items: typeof PORTFOLIO, openLightbox: (id: number) => void }) {
-  const stackItems = items.length >= 4 ? items.slice(0, 4) : [...items, ...items, ...items, ...items].slice(0, 4);
-  const [frontId, setFrontId] = useState(stackItems[0].id);
-  
-  useEffect(() => { setFrontId(stackItems[0].id); }, [items]);
-
-  const frontIndex = stackItems.findIndex(c => c.id === frontId);
-  const orderedCards = [...stackItems.slice(frontIndex), ...stackItems.slice(0, frontIndex)];
-
-  const next = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setFrontId(orderedCards[1].id);
-  };
-
-  return (
-    <div className="flex flex-col items-center py-10 lg:py-20 w-full">
-      <div className="relative w-[340px] md:w-[500px] h-[480px] md:h-[660px] cursor-pointer" onClick={() => openLightbox(frontId)}>
-        {orderedCards.map((c, i) => {
-          const isTop = i === 0;
-          const rotations = [0, -6, 4, -3];
-          const rotation = isTop ? 0 : rotations[i % rotations.length];
-          
-          return (
-            <motion.div
-              key={`${c.id}-${i}`}
-              layout
-              initial={false}
-              animate={{ 
-                scale: isTop ? 1 : 1 - (i * 0.05),
-                y: isTop ? 0 : i * 24,
-                rotate: rotation,
-                zIndex: stackItems.length - i
-              }}
-              whileHover={isTop ? { scale: 1.02, y: -10 } : {}}
-              transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="absolute inset-0 bg-[#211C17] rounded-xl shadow-2xl p-4 md:p-6"
-              style={{ boxShadow: isTop ? "0 40px 80px -20px rgba(0,0,0,0.5)" : "0 10px 30px -10px rgba(0,0,0,0.3)" }}
-            >
-              <div className="relative w-full h-full overflow-hidden rounded-lg">
-                {c.src ? (
-                  <img src={c.src} alt={c.title} className="w-full h-full object-cover" draggable={false} />
-                ) : (
-                  <GradientFill cat={c.cat} />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-0 md:opacity-100" />
-                {isTop && (
-                  <button onClick={next} className="absolute top-4 right-4 w-12 h-12 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-colors">
-                    <ArrowRight size={20} />
-                  </button>
-                )}
-                <div className={`absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#211C17] to-transparent transition-opacity duration-300 ${isTop ? 'opacity-100' : 'opacity-0'}`}>
-                  <div className="text-[#F0961B] text-[10px] font-bold tracking-[0.2em] uppercase mb-2">{c.cat}</div>
-                  <div className="text-[#FBF6EE] font-serif text-3xl">{c.title}</div>
-                </div>
-              </div>
-            </motion.div>
-          )
-        })}
-      </div>
-      <div className="mt-20 md:mt-24 font-sans text-[#211C17]/60 font-semibold tracking-[0.2em] text-sm uppercase">
-        {frontIndex + 1} / {stackItems.length}
-      </div>
-    </div>
-  )
-}
-
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Photography() {
-  const [activeCat, setActiveCat] = useState("All");
+  const [activeCategory, setActiveCategory] = useState("all");
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
-  const filtered = activeCat === "All" ? PORTFOLIO : PORTFOLIO.filter(i => i.cat === activeCat);
+  const filtered = activeCategory === "all"
+    ? PORTFOLIO
+    : PORTFOLIO.filter(i => i.category === activeCategory);
+
+  const activeMeta = getCatMeta(activeCategory);
 
   const openLightbox = (id: number) => {
     const idx = filtered.findIndex(i => i.id === id);
-    if (idx !== -1) setLightboxIdx(idx);
+    setLightboxIdx(idx);
   };
+  const prev = () => setLightboxIdx(i => (i! - 1 + filtered.length) % filtered.length);
+  const next = () => setLightboxIdx(i => (i! + 1) % filtered.length);
+
+  const categoryCounts: Record<string, number> = {};
+  PORTFOLIO.forEach(item => {
+    categoryCounts[item.category] = (categoryCounts[item.category] ?? 0) + 1;
+  });
+  const allCount = PORTFOLIO.length;
 
   return (
-    <div className="w-full min-h-screen flex flex-col bg-[#FBF6EE]">
-      <svg className="hidden">
-        <filter id="noiseFilter">
-          <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
-        </filter>
-      </svg>
-      
-      <div className="max-w-[1400px] mx-auto w-full px-6 lg:px-12 pt-24 md:pt-32 pb-24">
-        
-        {/* Header */}
-        <div className="mb-24">
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className="font-serif text-7xl md:text-8xl lg:text-[140px] text-[#211C17] relative inline-block mb-10 leading-none tracking-tight"
-          >
-            Photography
-            <motion.div 
-              initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ delay: 0.5, duration: 1.2, ease: "easeOut" }}
-              className="absolute -bottom-2 md:-bottom-4 left-0 h-[2px] md:h-[4px] bg-[#F0961B]" 
+    <div className="w-full flex flex-col bg-[#FBF6EE] pt-16 pb-24 min-h-screen">
+      <div className="max-w-7xl mx-auto px-6 w-full">
+
+        {/* ── Header ── */}
+        <div className="mb-12">
+          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+            <span
+              className="inline-flex items-center gap-2 text-[11px] font-sans tracking-[0.2em] uppercase font-bold mb-4 block"
+              style={{ color: activeMeta.accent }}
+            >
+              <span className="w-6 h-px inline-block" style={{ background: activeMeta.accent }} />
+              Portfolio
+            </span>
+            <h1 className="font-serif text-7xl md:text-8xl text-[#211C17] mb-3 leading-none">Photography</h1>
+            {/* Animated underline */}
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: "40%" }}
+              transition={{ duration: 1, delay: 0.3, ease: [0.76, 0, 0.24, 1] }}
+              className="h-[3px] mb-6"
+              style={{ background: activeMeta.accent }}
             />
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}
-            className="font-serif italic text-2xl md:text-4xl text-[#211C17]/50 max-w-2xl leading-relaxed"
-          >
-            A visual archive of life's most important moments.
-          </motion.p>
+            <p className="text-[#211C17]/60 font-sans text-lg max-w-xl">
+              A visual archive of life's most meaningful moments — from intimate portraits
+              to grand celebrations, across every season.
+            </p>
+          </motion.div>
         </div>
 
-        {/* Filters */}
-        <LayoutGroup>
-          <div className="flex flex-wrap gap-3 md:gap-4 mb-24">
+        {/* ── Filter Tabs ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.7 }}
+          className="flex flex-wrap gap-2 mb-14"
+        >
+          <LayoutGroup id="photo-filters">
             {CATEGORIES.map(cat => {
-              const isActive = activeCat === cat;
+              const isActive = activeCategory === cat.id;
+              const count = cat.id === "all" ? allCount : (categoryCounts[cat.id] ?? 0);
               return (
                 <button
-                  key={cat}
-                  onClick={() => setActiveCat(cat)}
-                  className={`relative px-6 md:px-8 py-3 md:py-4 rounded-full text-xs md:text-sm font-sans tracking-[0.15em] uppercase font-bold transition-colors ${isActive ? 'text-white' : 'text-[#211C17]/60 hover:text-[#211C17] hover:bg-[#211C17]/5'}`}
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  className="relative px-5 py-2.5 text-sm font-bold transition-colors rounded-full overflow-hidden flex items-center gap-2"
+                  style={{ color: isActive ? "#fff" : "#211C17" }}
                 >
                   {isActive && (
-                    <motion.div layoutId="pill" className="absolute inset-0 bg-[#F0961B] rounded-full z-0" transition={{ type: "spring", stiffness: 400, damping: 30 }} />
+                    <motion.div
+                      layoutId="activePhotoTab"
+                      className="absolute inset-0 rounded-full"
+                      style={{ background: cat.accent }}
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
                   )}
-                  <span className="relative z-10 flex items-center gap-3">
-                    {cat}
-                    <span className={`opacity-80 text-[10px] bg-white/20 px-2 py-0.5 rounded-full ${!isActive && 'bg-[#211C17]/10'}`}>
-                      {cat === "All" ? PORTFOLIO.length : PORTFOLIO.filter(p => p.cat === cat).length}
-                    </span>
+                  <span className="relative z-10 uppercase tracking-widest text-xs">{cat.label}</span>
+                  <span
+                    className="relative z-10 text-[10px] font-bold tabular-nums rounded-full px-1.5 py-0.5"
+                    style={{ background: isActive ? "rgba(255,255,255,0.25)" : "rgba(33,28,23,0.1)" }}
+                  >
+                    {count}
                   </span>
                 </button>
-              )
+              );
             })}
-          </div>
-        </LayoutGroup>
+          </LayoutGroup>
+        </motion.div>
 
-        {/* Gallery Display */}
-        <AnimatePresence mode="wait">
-          <motion.div 
-            key={activeCat}
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}
-          >
-            {activeCat === "All" ? (
-              <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6">
-                {filtered.map(item => (
-                  <div key={item.id} onClick={() => openLightbox(item.id)} className="relative group mb-6 overflow-hidden bg-[#211C17] rounded-xl cursor-pointer" style={{ aspectRatio: item.tall ? '3/4' : '4/3' }}>
-                    {item.src ? (
-                      <img src={item.src} alt={item.title} className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-105" loading="lazy" />
-                    ) : (
-                      <GradientFill cat={item.cat} />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#211C17]/90 via-[#211C17]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
-                      <span className="text-[#F0961B] text-[10px] uppercase tracking-[0.2em] font-bold mb-3">{item.cat}</span>
-                      <h3 className="text-[#FBF6EE] font-serif text-2xl leading-tight transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">{item.title}</h3>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : filtered.length > 0 ? (
-              <CategoryStack items={filtered} openLightbox={openLightbox} />
-            ) : (
-              <div className="py-40 text-center text-[#211C17]/30 font-serif text-3xl italic">No photos in this category yet.</div>
-            )}
+        {/* ── Gallery: Card Stack for specific categories, Masonry for All ── */}
+        {activeCategory === "all" ? (
+          <motion.div layout className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-5">
+            <AnimatePresence mode="popLayout">
+              {filtered.map(item => (
+                <GalleryCard key={item.id} item={item} onClick={() => openLightbox(item.id)} />
+              ))}
+            </AnimatePresence>
           </motion.div>
-        </AnimatePresence>
-
+        ) : (
+          <div className="w-full flex flex-col items-center">
+            <CategoryCardStack items={filtered} />
+            {filtered.length > 1 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="mt-2 flex items-center gap-2 text-[#211C17]/60 text-sm font-sans"
+              >
+                <ArrowRight size={14} />
+                <span>Click the card or arrows to browse all {filtered.length} photos</span>
+              </motion.div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Lightbox */}
+      {/* ── Lightbox ── */}
       <AnimatePresence>
         {lightboxIdx !== null && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-[#211C17]/95"
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0d0e]/97"
             style={{ backdropFilter: "blur(16px) saturate(50%)" }}
           >
-            <button onClick={() => setLightboxIdx(null)} className="absolute top-6 right-6 w-14 h-14 flex items-center justify-center text-white/50 hover:text-white transition-colors z-10 bg-white/5 hover:bg-white/10 rounded-full">
-              <X size={28} />
+            <button
+              className="absolute top-5 right-5 text-white/60 hover:text-white z-10 w-11 h-11 rounded-full bg-white/10 flex items-center justify-center transition-colors"
+              onClick={() => setLightboxIdx(null)}
+            >
+              <X size={20} />
             </button>
-            
-            <div className="absolute top-10 left-1/2 -translate-x-1/2 text-white/40 font-sans tracking-[0.3em] font-bold text-xs uppercase">
+            <div className="absolute top-5 left-1/2 -translate-x-1/2 text-white/40 text-sm font-sans">
               {lightboxIdx + 1} / {filtered.length}
             </div>
 
-            <motion.div 
-              key={lightboxIdx}
-              initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -50, opacity: 0 }} transition={{ type: "spring", damping: 25 }}
-              className="relative max-w-6xl w-full mx-auto p-4 md:p-16 flex flex-col items-center"
-            >
-              {filtered[lightboxIdx].src ? (
-                <img src={filtered[lightboxIdx].src} className="max-h-[75vh] w-auto object-contain shadow-2xl rounded-sm" />
-              ) : (
-                <div className="w-full max-w-3xl aspect-[4/3] relative shadow-2xl rounded-sm overflow-hidden">
-                  <GradientFill cat={filtered[lightboxIdx].cat} />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={lightboxIdx}
+                initial={{ opacity: 0, scale: 0.93, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.28 }}
+                className="relative max-w-4xl w-full mx-16 flex items-center justify-center"
+              >
+                <img
+                  src={filtered[lightboxIdx]?.src}
+                  alt={filtered[lightboxIdx]?.title}
+                  className="max-h-[80vh] max-w-full object-contain rounded-xl"
+                />
+                <div className="absolute bottom-4 left-4">
+                  <span
+                    className="text-[10px] uppercase tracking-[0.2em] font-bold block mb-1"
+                    style={{ color: getCatMeta(filtered[lightboxIdx]?.category ?? "all").accent }}
+                  >
+                    {getCatMeta(filtered[lightboxIdx]?.category ?? "all").label}
+                  </span>
+                  <p className="text-white font-serif text-lg">{filtered[lightboxIdx]?.title}</p>
                 </div>
-              )}
-              <div className="mt-10 text-center">
-                <span className="text-[#F0961B] text-[11px] tracking-[0.3em] uppercase font-bold block mb-4">{filtered[lightboxIdx].cat}</span>
-                <h2 className="text-[#FBF6EE] font-serif text-4xl">{filtered[lightboxIdx].title}</h2>
-              </div>
-            </motion.div>
+              </motion.div>
+            </AnimatePresence>
 
-            <button onClick={() => setLightboxIdx(i => (i! - 1 + filtered.length) % filtered.length)} className="absolute left-6 lg:left-12 top-1/2 -translate-y-1/2 w-16 h-16 flex items-center justify-center text-white/50 hover:text-white transition-colors bg-white/5 hover:bg-white/10 rounded-full">
-              <ArrowLeft size={32} />
+            <button onClick={prev} className="absolute left-4 text-white/60 hover:text-white w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+              <ChevronLeft size={24} />
             </button>
-            <button onClick={() => setLightboxIdx(i => (i! + 1) % filtered.length)} className="absolute right-6 lg:right-12 top-1/2 -translate-y-1/2 w-16 h-16 flex items-center justify-center text-white/50 hover:text-white transition-colors bg-white/5 hover:bg-white/10 rounded-full">
-              <ArrowRight size={32} />
+            <button onClick={next} className="absolute right-4 text-white/60 hover:text-white w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+              <ChevronRight size={24} />
             </button>
           </motion.div>
         )}
