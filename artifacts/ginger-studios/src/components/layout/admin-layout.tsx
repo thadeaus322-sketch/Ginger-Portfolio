@@ -5,11 +5,8 @@ const logoIcon = "/images/logo-icon.png";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
-  const { data: user, isLoading } = useGetMe({
-    query: {
-      retry: false,
-    }
-  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: user, isLoading } = useGetMe({ query: { retry: false } as any });
   
   const logout = useAdminLogout();
 

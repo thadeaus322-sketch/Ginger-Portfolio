@@ -15,7 +15,8 @@ import { useGetMe } from "@workspace/api-client-react";
 
 // Admin Protected Route Wrapper
 function ProtectedAdminRoute({ component: Component }: { component: any }) {
-  const { data: user, isLoading } = useGetMe({ query: { retry: false } });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: user, isLoading } = useGetMe({ query: { retry: false } as any });
   
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div></div>;

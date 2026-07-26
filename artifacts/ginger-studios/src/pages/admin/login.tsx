@@ -19,11 +19,8 @@ export default function AdminLogin() {
   const { toast } = useToast();
   
   // Check if already logged in
-  const { data: user, isLoading: checkingAuth } = useGetMe({
-    query: {
-      retry: false,
-    }
-  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: user, isLoading: checkingAuth } = useGetMe({ query: { retry: false } as any });
 
   if (!checkingAuth && user) {
     setLocation("/admin/dashboard");

@@ -231,6 +231,26 @@ export const RegisterUploadedImagesResponse = zod.object({
 
 
 /**
+ * @summary Request a presigned URL for direct-to-GCS file upload (admin only)
+ */
+export const RequestUploadUrlBody = zod.object({
+  "name": zod.string(),
+  "size": zod.number(),
+  "contentType": zod.string()
+})
+
+export const RequestUploadUrlResponse = zod.object({
+  "uploadURL": zod.string(),
+  "objectPath": zod.string(),
+  "metadata": zod.object({
+  "name": zod.string(),
+  "size": zod.number(),
+  "contentType": zod.string()
+})
+})
+
+
+/**
  * @summary Get public gallery by access token (client link)
  */
 export const GetPublicGalleryParams = zod.object({

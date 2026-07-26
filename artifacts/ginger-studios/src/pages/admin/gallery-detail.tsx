@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useLocation, Link } from "wouter";
-import { 
-  useGetGallery, 
-  useUpdateGallery, 
-  useDeleteGallery, 
+import {
+  useGetGallery,
+  useUpdateGallery,
+  useDeleteGallery,
   useRegenerateGalleryLink,
   getGetGalleryQueryKey,
   getListGalleriesQueryKey,
@@ -12,7 +12,29 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { ArrowLeft, Save, Copy, RefreshCw, Trash2, Ban, ExternalLink, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Save, Copy, RefreshCw, Trash2, Ban, ExternalLink, Upload, X, Loader2 } from "lucide-react";
+
+// ─── Upload helper ────────────────────────────────────────────────────────────
+async function uploadFileToStorage(file: File): Promise<string> {
+  const res = await fetch("/api/storage/uploads/request-url", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "Failed to get upload URL");
+  }
+  const { uploadURL, objectPath } = await res.json();
+  const putRes = await fetch(uploadURL, {
+    method: "PUT",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
+  if (!putRes.ok) throw new Error("Upload to storage failed");
+  return `/api/storage${objectPath}`;
+}
 
 export default function GalleryDetail() {
   const { id } = useParams<{ id: string }>();
@@ -21,20 +43,23 @@ export default function GalleryDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: gallery, isLoading } = useGetGallery(galleryId, {
-    query: { enabled: !!galleryId }
-  });
+  const { data: gallery, isLoading } = useGetGallery(galleryId);
 
   const updateMutation = useUpdateGallery();
   const deleteMutation = useDeleteGallery();
   const regenerateMutation = useRegenerateGalleryLink();
 
-  // Local state for editable fields
   const [clientName, setClientName] = useState("");
   const [shootTitle, setShootTitle] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [notes, setNotes] = useState("");
-  
+
+  // Upload state
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [localImageUrls, setLocalImageUrls] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const initRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -42,21 +67,16 @@ export default function GalleryDetail() {
       initRef.current = gallery.id;
       setClientName(gallery.clientName);
       setShootTitle(gallery.shootTitle);
-      // Format for date input (YYYY-MM-DD)
       setExpiresAt(gallery.expiresAt.split('T')[0]);
       setNotes(gallery.notes || "");
+      setLocalImageUrls(gallery.imageUrls);
     }
   }, [gallery]);
 
   const handleSave = () => {
     updateMutation.mutate({
       id: galleryId,
-      data: {
-        clientName,
-        shootTitle,
-        expiresAt: new Date(expiresAt).toISOString(),
-        notes
-      }
+      data: { clientName, shootTitle, expiresAt: new Date(expiresAt).toISOString(), notes }
     }, {
       onSuccess: (updated) => {
         toast({ title: "Gallery updated" });
@@ -112,7 +132,77 @@ export default function GalleryDetail() {
     }
   };
 
-  if (isLoading) return <div className="p-8">Loading gallery details...</div>;
+  // ── Add more photos ─────────────────────────────────────────────────────────
+  const handleAddPhotos = useCallback(async (files: FileList | File[]) => {
+    const fileArr = Array.from(files).filter(f => f.type.startsWith("image/"));
+    if (fileArr.length === 0) return;
+
+    setUploading(true);
+    setUploadProgress(0);
+    const newUrls: string[] = [];
+
+    for (let i = 0; i < fileArr.length; i++) {
+      try {
+        const url = await uploadFileToStorage(fileArr[i]);
+        newUrls.push(url);
+        setUploadProgress(Math.round(((i + 1) / fileArr.length) * 100));
+      } catch (err: any) {
+        toast({ variant: "destructive", title: `Failed to upload ${fileArr[i].name}`, description: err.message });
+      }
+    }
+
+    if (newUrls.length > 0) {
+      const allUrls = [...localImageUrls, ...newUrls];
+      setLocalImageUrls(allUrls);
+
+      // Persist to gallery
+      updateMutation.mutate({
+        id: galleryId,
+        data: {
+          // Pass imageUrls through coverUrl field workaround — since the PATCH schema only has specific fields,
+          // we save the updated URL list by patching and then invalidating
+        }
+      });
+
+      // Use create + delete pattern isn't available — directly update via gallery update
+      // For now save the new image urls by triggering a gallery update via the API directly
+      try {
+        await fetch(`/api/galleries/${galleryId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ imageUrls: allUrls, coverUrl: allUrls[0] }),
+        });
+        queryClient.invalidateQueries({ queryKey: getGetGalleryQueryKey(galleryId) });
+        queryClient.invalidateQueries({ queryKey: getListGalleriesQueryKey() });
+        toast({ title: `${newUrls.length} photo${newUrls.length > 1 ? "s" : ""} added to gallery` });
+      } catch {
+        toast({ variant: "destructive", title: "Failed to save photos to gallery" });
+      }
+    }
+
+    setUploading(false);
+    setUploadProgress(0);
+  }, [localImageUrls, galleryId, toast, updateMutation, queryClient]);
+
+  const removeImage = (url: string) => {
+    const newUrls = localImageUrls.filter(u => u !== url);
+    setLocalImageUrls(newUrls);
+    fetch(`/api/galleries/${galleryId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ imageUrls: newUrls, coverUrl: newUrls[0] || null }),
+    }).then(() => {
+      queryClient.invalidateQueries({ queryKey: getGetGalleryQueryKey(galleryId) });
+      queryClient.invalidateQueries({ queryKey: getListGalleriesQueryKey() });
+      toast({ title: "Photo removed" });
+    }).catch(() => {
+      toast({ variant: "destructive", title: "Failed to remove photo" });
+    });
+  };
+
+  if (isLoading) return <div className="p-8">Loading gallery details…</div>;
   if (!gallery) return <div className="p-8">Gallery not found.</div>;
 
   const publicUrl = `${window.location.origin}/gallery/${gallery.accessToken}`;
@@ -140,35 +230,35 @@ export default function GalleryDetail() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Col: Form */}
+
+        {/* Left Col: Form + Photos */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-card border border-border shadow-sm p-6 rounded-sm space-y-6">
             <h2 className="font-serif text-xl border-b border-border pb-4">Gallery Details</h2>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Client Name</label>
-                <input value={clientName} onChange={e => setClientName(e.target.value)} className="w-full px-3 py-2 bg-background border border-border rounded-sm" />
+                <input value={clientName} onChange={e => setClientName(e.target.value)} className="w-full px-3 py-2 bg-background border border-border rounded-sm focus:outline-none focus:ring-1 focus:ring-primary" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Shoot Title</label>
-                <input value={shootTitle} onChange={e => setShootTitle(e.target.value)} className="w-full px-3 py-2 bg-background border border-border rounded-sm" />
+                <input value={shootTitle} onChange={e => setShootTitle(e.target.value)} className="w-full px-3 py-2 bg-background border border-border rounded-sm focus:outline-none focus:ring-1 focus:ring-primary" />
               </div>
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Expiry Date</label>
-              <input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} className="w-full px-3 py-2 bg-background border border-border rounded-sm" />
+              <input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} className="w-full px-3 py-2 bg-background border border-border rounded-sm focus:outline-none focus:ring-1 focus:ring-primary" />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Admin Notes</label>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="w-full px-3 py-2 bg-background border border-border rounded-sm" placeholder="Internal notes..." />
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="w-full px-3 py-2 bg-background border border-border rounded-sm focus:outline-none focus:ring-1 focus:ring-primary" placeholder="Internal notes…" />
             </div>
 
             <div className="pt-4 flex justify-end">
-              <button 
+              <button
                 onClick={handleSave}
                 disabled={updateMutation.isPending}
                 className="bg-primary text-primary-foreground px-6 py-2 rounded-sm font-medium flex items-center gap-2 hover:bg-primary/90"
@@ -178,26 +268,64 @@ export default function GalleryDetail() {
             </div>
           </div>
 
-          {/* Image Preview Grid */}
+          {/* Photos section */}
           <div className="bg-card border border-border shadow-sm p-6 rounded-sm">
             <div className="flex justify-between items-center border-b border-border pb-4 mb-6">
-              <h2 className="font-serif text-xl">Images ({gallery.imageCount})</h2>
-              <span className="text-sm text-muted-foreground"><ImageIcon size={14} className="inline mr-1"/> Cover is first image</span>
+              <h2 className="font-serif text-xl">Photos ({localImageUrls.length})</h2>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-2 border border-primary text-primary hover:bg-primary/10 px-4 py-2 rounded-sm text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                {uploading ? <><Loader2 size={14} className="animate-spin" /> Uploading {uploadProgress}%…</> : <><Upload size={14} /> Add Photos</>}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={e => e.target.files && handleAddPhotos(e.target.files)}
+              />
             </div>
-            
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-              {gallery.imageUrls.map((url, i) => (
-                <div key={i} className="aspect-square bg-muted rounded-sm overflow-hidden relative group">
-                  <img src={url} className="w-full h-full object-cover" alt="" loading="lazy" />
-                  {i === 0 && <div className="absolute top-2 left-2 bg-primary text-xs px-2 py-0.5 rounded text-white font-medium">Cover</div>}
-                </div>
-              ))}
+
+            {/* Upload drop zone */}
+            <div
+              onDragOver={e => { e.preventDefault(); e.stopPropagation(); }}
+              onDrop={e => { e.preventDefault(); e.stopPropagation(); handleAddPhotos(e.dataTransfer.files); }}
+              className="border-2 border-dashed border-border rounded-sm p-6 text-center mb-6 hover:border-primary/50 transition-colors cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload size={24} className="text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Drop photos here or click to browse</p>
             </div>
+
+            {localImageUrls.length === 0 ? (
+              <p className="text-center text-muted-foreground text-sm py-4">No photos yet — upload some above.</p>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                {localImageUrls.map((url, i) => (
+                  <div key={i} className="aspect-square bg-muted rounded-sm overflow-hidden relative group">
+                    <img src={url} className="w-full h-full object-cover" alt="" loading="lazy" />
+                    {i === 0 && <div className="absolute top-2 left-2 bg-primary text-[8px] px-2 py-0.5 rounded text-white font-medium">Cover</div>}
+                    <button
+                      type="button"
+                      onClick={() => removeImage(url)}
+                      className="absolute top-1.5 right-1.5 w-6 h-6 bg-destructive rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X size={12} className="text-white" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right Col: Actions & Link */}
+        {/* Right Col */}
         <div className="space-y-6">
+          {/* Shareable Link */}
           <div className="bg-card border border-border shadow-sm p-6 rounded-sm">
             <h2 className="font-serif text-xl mb-4">Shareable Link</h2>
             <div className="p-3 bg-muted border border-border rounded-sm mb-4 break-all text-sm font-mono text-foreground/80">
@@ -211,9 +339,9 @@ export default function GalleryDetail() {
                 <ExternalLink size={16} /> Open Gallery
               </a>
             </div>
-            
+
             <div className="mt-6 pt-6 border-t border-border">
-              <button 
+              <button
                 onClick={handleRegenerateLink}
                 className="w-full flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors p-2"
               >
@@ -223,17 +351,17 @@ export default function GalleryDetail() {
             </div>
           </div>
 
+          {/* Danger Zone */}
           <div className="bg-card border-destructive/20 border shadow-sm p-6 rounded-sm bg-red-50/50">
             <h2 className="font-serif text-xl text-destructive mb-4">Danger Zone</h2>
             <div className="space-y-3">
-              <button 
+              <button
                 onClick={handleRevokeRestore}
                 className="w-full flex items-center justify-between px-4 py-2 border border-destructive text-destructive hover:bg-destructive/10 rounded-sm font-medium transition-colors"
               >
                 <span className="flex items-center gap-2"><Ban size={16} /> {gallery.status === 'revoked' ? 'Restore Access' : 'Revoke Access'}</span>
               </button>
-              
-              <button 
+              <button
                 onClick={handleDelete}
                 className="w-full flex items-center justify-between px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-sm font-medium transition-colors"
               >
@@ -242,6 +370,7 @@ export default function GalleryDetail() {
             </div>
           </div>
 
+          {/* Stats */}
           <div className="bg-card border border-border shadow-sm p-6 rounded-sm">
             <h2 className="font-serif text-xl mb-4">Stats</h2>
             <div className="flex justify-between items-center py-2 border-b border-border">
@@ -249,11 +378,11 @@ export default function GalleryDetail() {
               <span className="font-medium text-lg">{gallery.viewCount}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-border">
-              <span className="text-muted-foreground">Images</span>
-              <span className="font-medium text-lg">{gallery.imageCount}</span>
+              <span className="text-muted-foreground">Photos</span>
+              <span className="font-medium text-lg">{localImageUrls.length}</span>
             </div>
             <div className="flex justify-between items-center py-2">
-              <span className="text-muted-foreground">ID</span>
+              <span className="text-muted-foreground">Gallery ID</span>
               <span className="font-mono text-sm">{gallery.id}</span>
             </div>
           </div>

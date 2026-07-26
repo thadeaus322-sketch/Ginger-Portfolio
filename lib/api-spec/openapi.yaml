@@ -244,6 +244,32 @@ paths:
               schema:
                 $ref: "#/components/schemas/UploadResult"
 
+  # --- STORAGE ---
+  /storage/uploads/request-url:
+    post:
+      operationId: requestUploadUrl
+      tags: [upload]
+      summary: Request a presigned URL for direct-to-GCS file upload (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestUploadUrlBody"
+      responses:
+        "200":
+          description: Presigned upload URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestUploadUrlResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   # --- PUBLIC GALLERY ---
   /gallery/{token}:
     get:
@@ -472,3 +498,33 @@ components:
         count:
           type: integer
       required: [urls, count]
+
+    RequestUploadUrlBody:
+      type: object
+      properties:
+        name:
+          type: string
+        size:
+          type: integer
+        contentType:
+          type: string
+      required: [name, size, contentType]
+
+    RequestUploadUrlResponse:
+      type: object
+      properties:
+        uploadURL:
+          type: string
+        objectPath:
+          type: string
+        metadata:
+          type: object
+          properties:
+            name:
+              type: string
+            size:
+              type: integer
+            contentType:
+              type: string
+          required: [name, size, contentType]
+      required: [uploadURL, objectPath, metadata]
