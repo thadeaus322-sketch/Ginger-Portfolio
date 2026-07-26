@@ -686,13 +686,6 @@ function ServicesSection({ onBook }: { onBook: () => void }) {
               className="font-sans text-[#FBF6EE]/38 text-base leading-relaxed max-w-sm mb-10">
               From intimate couples films to full commercial productions — we handle every genre with the same dedication to craft.
             </motion.p>
-            <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-              transition={{ delay: 0.35, duration: 0.6 }}
-              className="space-y-3">
-              <p className="font-mono text-[9px] text-[#FBF6EE]/20 tracking-[0.3em] uppercase">Starting from</p>
-              <p className="font-serif text-[#FBF6EE]/80 text-4xl">₦150,000</p>
-              <p className="font-sans text-[#FBF6EE]/22 text-xs">Custom packages available</p>
-            </motion.div>
             <motion.button onClick={onBook}
               className="mt-10 flex items-center gap-3 bg-[#F0961B] text-white px-7 py-4 rounded-sm font-sans text-sm tracking-[0.16em] uppercase font-semibold shadow-lg"
               whileHover={{ scale: 1.05, backgroundColor: "#e08010" }}
