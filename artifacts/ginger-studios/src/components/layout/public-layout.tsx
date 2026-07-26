@@ -37,8 +37,8 @@ function Preloader({ onComplete }: { onComplete: () => void }) {
         animate={{ rotate: 360, scale: [1, 1.05, 1] }}
         transition={{ rotate: { duration: 10, ease: "linear", repeat: Infinity }, scale: { duration: 2, ease: "easeInOut", repeat: Infinity } }}
       />
-      <div className="text-[#211C17] font-sans text-xs uppercase tracking-[0.4em] mb-6 font-semibold">
-        Ginger Studios
+      <div className="text-[#211C17] font-sans text-xs uppercase tracking-[0.4em] mb-6 font-semibold text-center">
+        Ginger Studios &amp; Creatives
       </div>
       <div className="w-[180px] h-[1px] bg-[#211C17]/10 overflow-hidden">
         <motion.div
@@ -81,10 +81,11 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
 
       <header className="sticky top-0 z-40 w-full bg-[#FBF6EE]/90 backdrop-blur-xl border-b border-[#211C17]/5">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12 h-24 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-4 group">
-            <img src={logoB} alt="Ginger Studios" className="h-8 object-contain" />
-            <span className="font-serif text-xl tracking-tight text-[#211C17]">
-              Ginger Studios
+          <Link href="/" className="flex items-center gap-3 group">
+            <img src={logoIcon} alt="Ginger Studios & Creatives" className="h-10 object-contain" />
+            <span className="font-serif text-lg tracking-tight text-[#211C17] leading-tight">
+              Ginger Studios<br />
+              <span className="text-sm text-[#211C17]/60 font-sans font-medium tracking-[0.05em]">&amp; Creatives</span>
             </span>
           </Link>
 
@@ -169,7 +170,6 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
             <ul className="space-y-5 text-white/60 font-sans text-sm tracking-wider">
               <li><Link href="/photography" className="hover:text-white transition-colors">Photography</Link></li>
               <li><Link href="/videography" className="hover:text-white transition-colors">Videography</Link></li>
-              <li><Link href="/admin" className="hover:text-white transition-colors">Studio Login</Link></li>
             </ul>
           </div>
 

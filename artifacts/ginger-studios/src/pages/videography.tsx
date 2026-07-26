@@ -128,189 +128,179 @@ function Grain({ opacity = 0.04 }: { opacity?: number }) {
 }
 
 // ─── Cinema Hero ──────────────────────────────────────────────────────────────
+// Full-bleed video BG, warm cream overlay — cinematic but stays light
 function CinemaHero({ onBook }: { onBook: () => void }) {
   const heroRef = useRef<HTMLDivElement>(null);
   const vidRef  = useRef<HTMLVideoElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-  const videoY      = useTransform(scrollYProgress, [0, 1], ["0%", "12%"]);
-  const scaleFrame  = useTransform(scrollYProgress, [0, 0.5], [1, 1.05]);
-  const textY       = useTransform(scrollYProgress, [0, 1], ["0%", "-8%"]);
-
-  // Mouse tilt on frame
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const rx = useSpring(useTransform(my, [-0.5, 0.5], [6, -6]), { stiffness: 120, damping: 22 });
-  const ry = useSpring(useTransform(mx, [-0.5, 0.5], [-6, 6]), { stiffness: 120, damping: 22 });
-
-  const handleMouse = (e: React.MouseEvent<HTMLDivElement>) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    mx.set((e.clientX - r.left) / r.width - 0.5);
-    my.set((e.clientY - r.top) / r.height - 0.5);
-  };
+  const videoScale = useTransform(scrollYProgress, [0, 1], [1, 1.12]);
+  const contentY   = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
+  const overlayOp  = useTransform(scrollYProgress, [0, 0.6], [0, 0.35]);
 
   useEffect(() => {
     const v = vidRef.current;
     if (!v) return;
-    v.play().catch(() => {});
+    v.muted = true;
+    const attempt = () => v.play().catch(() => {});
+    attempt();
+    // retry after short delay in case browser blocked initial attempt
+    const t = setTimeout(attempt, 800);
+    return () => clearTimeout(t);
   }, []);
 
   return (
-    <section ref={heroRef} className="relative bg-[#FBF6EE] overflow-hidden min-h-[100svh] flex items-center">
-      <Grain opacity={0.03} />
+    <section ref={heroRef} className="relative overflow-hidden" style={{ height: "100svh", minHeight: 600 }}>
 
-      {/* Ambient warm glow top-right */}
-      <div className="absolute top-0 right-0 w-[60vw] h-[60vw] pointer-events-none"
-        style={{ background: "radial-gradient(ellipse at 80% 20%, rgba(240,150,27,0.08) 0%, transparent 65%)" }} />
-
-      <motion.div style={{ opacity: heroOpacity }}
-        className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-32 lg:py-0 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-
-        {/* Left copy */}
-        <motion.div style={{ y: textY }} className="order-2 lg:order-1">
-          <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15, duration: 0.6 }}
-            className="flex items-center gap-3 mb-8">
-            <motion.div className="h-px bg-[#F0961B]"
-              initial={{ width: 0 }} animate={{ width: 32 }}
-              transition={{ delay: 0.3, duration: 0.6 }} />
-            <span className="font-mono text-[#F0961B] text-[10px] tracking-[0.5em] uppercase">Ginger Studios · Motion</span>
-          </motion.div>
-
-          <h1 className="font-serif text-[#211C17] leading-[0.88] tracking-tight mb-8"
-            style={{ fontSize: "clamp(54px, 8.5vw, 128px)" }}>
-            <SplitText text="We make" delay={0.2} />
-            <br />
-            <span className="inline-block overflow-hidden">
-              <motion.span className="inline-block text-[#F0961B] italic"
-                initial={{ y: "115%", opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.48, duration: 0.95, ease: [0.16, 1, 0.3, 1] }}>
-                films.
-              </motion.span>
-            </span>
-          </h1>
-
-          <motion.p initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.72, duration: 0.7 }}
-            className="font-serif italic text-[#211C17]/40 text-xl md:text-2xl max-w-sm mb-12 leading-relaxed">
-            Every frame, a feeling.<br />Every second, preserved.
-          </motion.p>
-
-          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.7 }}
-            className="flex flex-wrap gap-4 items-center">
-            <motion.button onClick={onBook}
-              className="group flex items-center gap-3 bg-[#211C17] text-[#FBF6EE] px-7 py-4 rounded-sm font-sans text-sm tracking-[0.16em] uppercase font-semibold shadow-lg"
-              whileHover={{ backgroundColor: "#F0961B", scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              transition={{ duration: 0.22 }}>
-              Book Your Film
-              <motion.svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-                whileHover={{ x: 3 }}>
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </motion.svg>
-            </motion.button>
-
-            <motion.a href="#films"
-              className="flex items-center gap-2 text-[#211C17]/50 hover:text-[#211C17] font-mono text-[10px] tracking-[0.25em] uppercase transition-colors group"
-              whileHover={{ y: 1 }}>
-              <motion.div className="w-5 h-5 rounded-full border border-[#211C17]/25 flex items-center justify-center group-hover:border-[#F0961B] transition-colors">
-                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-              </motion.div>
-              View Films
-            </motion.a>
-          </motion.div>
-
-          {/* Stats */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2, duration: 0.7 }}
-            className="flex gap-10 mt-16 pt-12 border-t border-[#211C17]/8">
-            {[["100+", "Films"], ["240+", "Clients"], ["7yrs", "Shooting"]].map(([n, l]) => (
-              <div key={l}>
-                <p className="font-serif text-[28px] text-[#211C17] leading-none">{n}</p>
-                <p className="font-mono text-[9px] text-[#211C17]/30 tracking-[0.28em] uppercase mt-2">{l}</p>
-              </div>
-            ))}
-          </motion.div>
-        </motion.div>
-
-        {/* Right: Cinema Frame — keeps playing */}
-        <div className="order-1 lg:order-2 relative" onMouseMove={handleMouse} onMouseLeave={() => { mx.set(0); my.set(0); }}>
-          <motion.div
-            style={{ scale: scaleFrame, rotateX: rx, rotateY: ry, maxWidth: 590, transformStyle: "preserve-3d" } as React.CSSProperties}
-            initial={{ opacity: 0, x: 50, y: 10 }}
-            animate={{ opacity: 1, x: 0, y: 0 }}
-            transition={{ delay: 0.28, duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-            className="relative mx-auto">
-            <div className="relative bg-[#1a1410] rounded-xl overflow-hidden shadow-[0_60px_140px_-20px_rgba(33,28,23,0.45)]">
-              <Sprockets side="left" />
-              <Sprockets side="right" />
-
-              <div className="mx-7 relative overflow-hidden" style={{ aspectRatio: "16/9" }}>
-                <motion.div style={{ y: videoY }} className="w-full h-[115%] -top-[5%] absolute inset-x-0">
-                  <video
-                    ref={vidRef}
-                    src={FILMS[0].src}
-                    muted
-                    loop
-                    playsInline
-                    autoPlay
-                    preload="auto"
-                    className="w-full h-full object-cover"
-                  />
-                </motion.div>
-
-                {/* Vignette */}
-                <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,0.5)] pointer-events-none" />
-                {/* Bottom grad */}
-                <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/70 to-transparent pointer-events-none" />
-
-                {/* REC */}
-                <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/55 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/8">
-                  <motion.div className="w-1.5 h-1.5 rounded-full bg-[#F0961B]"
-                    animate={{ opacity: [1, 0.15, 1] }}
-                    transition={{ repeat: Infinity, duration: 1.5 }} />
-                  <span className="font-mono text-[7px] text-white/60 tracking-[0.3em] uppercase">REC</span>
-                </div>
-
-                {/* Film info */}
-                <motion.div className="absolute bottom-3 left-3 right-3 flex items-end justify-between"
-                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2, duration: 0.6 }}>
-                  <div>
-                    <p className="font-mono text-[7px] text-[#F0961B] tracking-[0.3em] uppercase mb-1">{FILMS[0].cat}</p>
-                    <p className="font-serif text-white text-sm leading-tight">{FILMS[0].title}</p>
-                    <p className="font-serif italic text-white/40 text-xs mt-0.5">{FILMS[0].sub}</p>
-                  </div>
-                  <span className="font-mono text-[7px] text-white/30 tracking-widest">{FILMS[0].frame}</span>
-                </motion.div>
-              </div>
-
-              {/* Data bar */}
-              <div className="mx-7 py-3 flex justify-between border-t border-white/5">
-                <span className="font-mono text-[7px] text-white/25 tracking-[0.2em]">GVS · MOTION · 2025</span>
-                <span className="font-mono text-[7px] text-white/15 tracking-widest">4K · COLOR GRADE</span>
-              </div>
-            </div>
-
-            {/* Floating badge */}
-            <motion.div
-              className="absolute -bottom-5 -right-3 bg-[#F0961B] text-white px-4 py-2 rounded-sm shadow-lg z-20"
-              animate={{ y: [0, -6, 0] }}
-              transition={{ repeat: Infinity, duration: 3.2, ease: "easeInOut" }}>
-              <p className="font-mono text-[9px] tracking-[0.22em] uppercase font-bold">Now Playing</p>
-            </motion.div>
-
-            {/* Glow */}
-            <div className="absolute -inset-6 -z-10 rounded-2xl opacity-20"
-              style={{ background: "radial-gradient(ellipse at 60% 50%, #F0961B 0%, transparent 70%)" }} />
-          </motion.div>
-        </div>
+      {/* ── Full-bleed video background ─────────────────────────────────── */}
+      <motion.div style={{ scale: videoScale }} className="absolute inset-0 origin-center">
+        <video
+          ref={vidRef}
+          src={FILMS[0].src}
+          muted
+          loop
+          playsInline
+          autoPlay
+          preload="auto"
+          className="w-full h-full object-cover"
+        />
       </motion.div>
 
-      {/* Scroll indicator */}
-      <motion.div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2"
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.8 }}>
-        <motion.div className="w-px h-12 bg-gradient-to-b from-[#211C17]/35 to-transparent origin-top"
-          animate={{ scaleY: [0, 1, 0] }}
-          transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }} />
-        <span className="font-mono text-[8px] text-[#211C17]/22 tracking-[0.38em] uppercase">Scroll</span>
+      {/* ── Warm cream overlay — keeps it light, not dark ───────────────── */}
+      {/* Lighter centre so the video breathes; creamy wash at top/bottom for text contrast */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: "linear-gradient(to bottom, rgba(251,246,238,0.55) 0%, rgba(251,246,238,0.08) 38%, rgba(251,246,238,0.08) 60%, rgba(251,246,238,0.65) 100%)" }} />
+
+      {/* Warm amber tint to push the cream warmth into the video */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at 40% 50%, rgba(240,150,27,0.07) 0%, transparent 60%)" }} />
+
+      {/* Scroll-triggered darkening so user can still read as they scroll */}
+      <motion.div style={{ opacity: overlayOp }}
+        className="absolute inset-0 bg-[#FBF6EE] pointer-events-none" />
+
+      {/* Film grain */}
+      <Grain opacity={0.045} />
+
+      {/* ── Cinematic HUD corners ──────────────────────────────────────────── */}
+      {/* TL */}
+      <div className="absolute top-8 left-8 z-20 pointer-events-none">
+        <div className="w-8 h-8 border-l-2 border-t-2 border-[#F0961B]/70" />
+      </div>
+      {/* TR */}
+      <div className="absolute top-8 right-8 z-20 pointer-events-none">
+        <div className="w-8 h-8 border-r-2 border-t-2 border-[#F0961B]/70" />
+      </div>
+      {/* BL */}
+      <div className="absolute bottom-20 left-8 z-20 pointer-events-none">
+        <div className="w-8 h-8 border-l-2 border-b-2 border-[#F0961B]/70" />
+      </div>
+      {/* BR */}
+      <div className="absolute bottom-20 right-8 z-20 pointer-events-none">
+        <div className="w-8 h-8 border-r-2 border-b-2 border-[#F0961B]/70" />
+      </div>
+
+      {/* REC badge — top center */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.6, duration: 0.5 }}
+        className="absolute top-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-white/60 backdrop-blur-md border border-[#211C17]/10 px-3 py-1.5 rounded-full shadow-sm">
+        <motion.div className="w-1.5 h-1.5 rounded-full bg-[#F0961B]"
+          animate={{ opacity: [1, 0.1, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} />
+        <span className="font-mono text-[8px] text-[#211C17]/60 tracking-[0.3em] uppercase">Recording</span>
+      </motion.div>
+
+      {/* Timecode — bottom left HUD */}
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.8, duration: 0.6 }}
+        className="absolute bottom-8 left-8 z-20 pointer-events-none hidden md:block">
+        <p className="font-mono text-[9px] text-[#211C17]/35 tracking-[0.22em] uppercase">GVS · Motion · 2026</p>
+        <p className="font-mono text-[8px] text-[#211C17]/22 tracking-widest mt-0.5">4K · Color Grade · 60fps</p>
+      </motion.div>
+
+      {/* Film title — bottom right HUD */}
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.8, duration: 0.6 }}
+        className="absolute bottom-8 right-8 z-20 pointer-events-none hidden md:block text-right">
+        <p className="font-mono text-[8px] text-[#F0961B] tracking-[0.28em] uppercase">{FILMS[0].cat}</p>
+        <p className="font-serif text-[#211C17]/55 text-sm italic mt-0.5">{FILMS[0].title}</p>
+      </motion.div>
+
+      {/* ── Main content ────────────────────────────────────────────────────── */}
+      <motion.div
+        style={{ y: contentY }}
+        className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6 lg:px-16">
+
+        {/* Eyebrow */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.7 }}
+          className="flex items-center gap-3 mb-8">
+          <motion.div className="h-px bg-[#F0961B]" initial={{ width: 0 }} animate={{ width: 28 }} transition={{ delay: 0.4, duration: 0.6 }} />
+          <span className="font-mono text-[#F0961B] text-[10px] tracking-[0.55em] uppercase">Ginger Studios · Motion</span>
+          <motion.div className="h-px bg-[#F0961B]" initial={{ width: 0 }} animate={{ width: 28 }} transition={{ delay: 0.4, duration: 0.6 }} />
+        </motion.div>
+
+        {/* Headline */}
+        <h1 className="font-serif text-[#211C17] leading-[0.9] tracking-tight mb-6"
+          style={{ fontSize: "clamp(64px, 10vw, 152px)", textShadow: "0 2px 40px rgba(251,246,238,0.9)" }}>
+          <SplitText text="We make" delay={0.3} />
+          <br />
+          <span className="inline-block overflow-hidden">
+            <motion.span className="inline-block text-[#F0961B] italic"
+              initial={{ y: "110%", opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.6, duration: 1, ease: [0.16, 1, 0.3, 1] }}>
+              films.
+            </motion.span>
+          </span>
+        </h1>
+
+        {/* Sub */}
+        <motion.p
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.7 }}
+          className="font-serif italic text-[#211C17]/55 text-lg md:text-2xl max-w-lg mb-12 leading-relaxed"
+          style={{ textShadow: "0 1px 20px rgba(251,246,238,0.8)" }}>
+          Every frame, a feeling. Every second, preserved.
+        </motion.p>
+
+        {/* CTAs */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1, duration: 0.7 }}
+          className="flex flex-wrap items-center justify-center gap-4">
+          <motion.button onClick={onBook}
+            className="flex items-center gap-3 bg-[#211C17] text-[#FBF6EE] px-8 py-4 rounded-sm font-sans text-sm tracking-[0.18em] uppercase font-semibold shadow-xl"
+            whileHover={{ backgroundColor: "#F0961B", scale: 1.05 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.2 }}>
+            Book Your Film
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </motion.button>
+
+          <motion.a href="#films"
+            className="flex items-center gap-3 bg-white/65 backdrop-blur-sm text-[#211C17] border border-[#211C17]/15 px-8 py-4 rounded-sm font-sans text-sm tracking-[0.18em] uppercase font-semibold shadow-md hover:bg-white/85 transition-colors"
+            whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
+            Watch Our Films
+          </motion.a>
+        </motion.div>
+
+        {/* Stats row */}
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 0.8 }}
+          className="flex items-center gap-10 md:gap-16 mt-16 pt-10 border-t border-[#211C17]/12">
+          {[["100+", "Films Made"], ["240+", "Happy Clients"], ["7 yrs", "In Business"]].map(([n, l]) => (
+            <div key={l} className="text-center">
+              <p className="font-serif text-[26px] md:text-3xl text-[#211C17] leading-none" style={{ textShadow: "0 1px 12px rgba(251,246,238,0.9)" }}>{n}</p>
+              <p className="font-mono text-[8px] text-[#211C17]/35 tracking-[0.28em] uppercase mt-2">{l}</p>
+            </div>
+          ))}
+        </motion.div>
+      </motion.div>
+
+      {/* Scroll cue */}
+      <motion.div
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.2, duration: 0.6 }}>
+        <motion.div className="w-px h-10 bg-gradient-to-b from-[#211C17]/40 to-transparent origin-top"
+          animate={{ scaleY: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }} />
+        <span className="font-mono text-[8px] text-[#211C17]/25 tracking-[0.4em] uppercase">Scroll</span>
       </motion.div>
     </section>
   );
@@ -808,9 +798,9 @@ function ClosingCTA({ onBook }: { onBook: () => void }) {
     <section ref={ref} className="relative bg-[#0f0c09] py-32 lg:py-52 px-6 lg:px-16 xl:px-24 overflow-hidden">
       <Grain opacity={0.04} />
       {/* Parallax amber glow */}
-      <motion.div style={{ y: bgY }}
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: "radial-gradient(ellipse at 50% 60%, rgba(240,150,27,0.14) 0%, transparent 65%)" }} />
+      <motion.div
+        style={{ y: bgY, background: "radial-gradient(ellipse at 50% 60%, rgba(240,150,27,0.14) 0%, transparent 65%)" }}
+        className="absolute inset-0 pointer-events-none" />
 
       <div className="max-w-[1400px] mx-auto relative z-10 text-center">
         <motion.div initial={{ opacity: 0, y: 14 }} animate={inView ? { opacity: 1, y: 0 } : {}}

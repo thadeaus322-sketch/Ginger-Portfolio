@@ -12,29 +12,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { ArrowLeft, Save, Copy, RefreshCw, Trash2, Ban, ExternalLink, Upload, X, Loader2 } from "lucide-react";
-
-// ─── Upload helper ────────────────────────────────────────────────────────────
-async function uploadFileToStorage(file: File): Promise<string> {
-  const res = await fetch("/api/storage/uploads/request-url", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || "Failed to get upload URL");
-  }
-  const { uploadURL, objectPath } = await res.json();
-  const putRes = await fetch(uploadURL, {
-    method: "PUT",
-    headers: { "Content-Type": file.type },
-    body: file,
-  });
-  if (!putRes.ok) throw new Error("Upload to storage failed");
-  return `/api/storage${objectPath}`;
-}
+import { ArrowLeft, Save, Copy, RefreshCw, Trash2, Ban, ExternalLink, Plus, X, Link2 } from "lucide-react";
 
 export default function GalleryDetail() {
   const { id } = useParams<{ id: string }>();
@@ -54,11 +32,10 @@ export default function GalleryDetail() {
   const [expiresAt, setExpiresAt] = useState("");
   const [notes, setNotes] = useState("");
 
-  // Upload state
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  // Photo URL state
   const [localImageUrls, setLocalImageUrls] = useState<string[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [urlInput, setUrlInput] = useState("");
+  const [urlError, setUrlError] = useState("");
 
   const initRef = useRef<number | null>(null);
 
@@ -132,58 +109,37 @@ export default function GalleryDetail() {
     }
   };
 
-  // ── Add more photos ─────────────────────────────────────────────────────────
-  const handleAddPhotos = useCallback(async (files: FileList | File[]) => {
-    const fileArr = Array.from(files).filter(f => f.type.startsWith("image/"));
-    if (fileArr.length === 0) return;
+  // ── Add photo by URL ─────────────────────────────────────────────────────────
+  const handleAddUrl = useCallback(async () => {
+    const raw = urlInput.trim();
+    if (!raw) return;
 
-    setUploading(true);
-    setUploadProgress(0);
-    const newUrls: string[] = [];
-
-    for (let i = 0; i < fileArr.length; i++) {
-      try {
-        const url = await uploadFileToStorage(fileArr[i]);
-        newUrls.push(url);
-        setUploadProgress(Math.round(((i + 1) / fileArr.length) * 100));
-      } catch (err: any) {
-        toast({ variant: "destructive", title: `Failed to upload ${fileArr[i].name}`, description: err.message });
-      }
+    // Support newline / comma separated paste of multiple URLs
+    const urls = raw.split(/[\n,]+/).map(u => u.trim()).filter(u => u.startsWith("http"));
+    if (urls.length === 0) {
+      setUrlError("Please paste a valid image URL starting with http");
+      return;
     }
 
-    if (newUrls.length > 0) {
-      const allUrls = [...localImageUrls, ...newUrls];
-      setLocalImageUrls(allUrls);
+    const allUrls = [...localImageUrls, ...urls.filter(u => !localImageUrls.includes(u))];
+    setLocalImageUrls(allUrls);
+    setUrlInput("");
+    setUrlError("");
 
-      // Persist to gallery
-      updateMutation.mutate({
-        id: galleryId,
-        data: {
-          // Pass imageUrls through coverUrl field workaround — since the PATCH schema only has specific fields,
-          // we save the updated URL list by patching and then invalidating
-        }
+    try {
+      await fetch(`/api/galleries/${galleryId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ imageUrls: allUrls, coverUrl: allUrls[0] }),
       });
-
-      // Use create + delete pattern isn't available — directly update via gallery update
-      // For now save the new image urls by triggering a gallery update via the API directly
-      try {
-        await fetch(`/api/galleries/${galleryId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ imageUrls: allUrls, coverUrl: allUrls[0] }),
-        });
-        queryClient.invalidateQueries({ queryKey: getGetGalleryQueryKey(galleryId) });
-        queryClient.invalidateQueries({ queryKey: getListGalleriesQueryKey() });
-        toast({ title: `${newUrls.length} photo${newUrls.length > 1 ? "s" : ""} added to gallery` });
-      } catch {
-        toast({ variant: "destructive", title: "Failed to save photos to gallery" });
-      }
+      queryClient.invalidateQueries({ queryKey: getGetGalleryQueryKey(galleryId) });
+      queryClient.invalidateQueries({ queryKey: getListGalleriesQueryKey() });
+      toast({ title: `${urls.length} photo${urls.length > 1 ? "s" : ""} added` });
+    } catch {
+      toast({ variant: "destructive", title: "Failed to save photos" });
     }
-
-    setUploading(false);
-    setUploadProgress(0);
-  }, [localImageUrls, galleryId, toast, updateMutation, queryClient]);
+  }, [urlInput, localImageUrls, galleryId, toast, queryClient]);
 
   const removeImage = (url: string) => {
     const newUrls = localImageUrls.filter(u => u !== url);
@@ -272,37 +228,36 @@ export default function GalleryDetail() {
           <div className="bg-card border border-border shadow-sm p-6 rounded-sm">
             <div className="flex justify-between items-center border-b border-border pb-4 mb-6">
               <h2 className="font-serif text-xl">Photos ({localImageUrls.length})</h2>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="flex items-center gap-2 border border-primary text-primary hover:bg-primary/10 px-4 py-2 rounded-sm text-sm font-medium transition-colors disabled:opacity-50"
-              >
-                {uploading ? <><Loader2 size={14} className="animate-spin" /> Uploading {uploadProgress}%…</> : <><Upload size={14} /> Add Photos</>}
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={e => e.target.files && handleAddPhotos(e.target.files)}
-              />
             </div>
 
-            {/* Upload drop zone */}
-            <div
-              onDragOver={e => { e.preventDefault(); e.stopPropagation(); }}
-              onDrop={e => { e.preventDefault(); e.stopPropagation(); handleAddPhotos(e.dataTransfer.files); }}
-              className="border-2 border-dashed border-border rounded-sm p-6 text-center mb-6 hover:border-primary/50 transition-colors cursor-pointer"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload size={24} className="text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Drop photos here or click to browse</p>
+            {/* URL paste input */}
+            <div className="mb-6 space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <Link2 size={14} className="text-primary" /> Paste photo URL(s)
+              </label>
+              <div className="flex gap-2">
+                <textarea
+                  value={urlInput}
+                  onChange={e => { setUrlInput(e.target.value); setUrlError(""); }}
+                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAddUrl(); } }}
+                  placeholder="https://… (one per line, or comma-separated)"
+                  rows={2}
+                  className="flex-1 px-3 py-2 bg-background border border-border rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddUrl}
+                  className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-sm text-sm font-medium hover:bg-primary/90 transition-colors self-stretch"
+                >
+                  <Plus size={14} /> Add
+                </button>
+              </div>
+              {urlError && <p className="text-xs text-destructive">{urlError}</p>}
+              <p className="text-xs text-muted-foreground">Paste direct image links from Google Drive (shared), Cloudinary, Dropbox, or any public image host.</p>
             </div>
 
             {localImageUrls.length === 0 ? (
-              <p className="text-center text-muted-foreground text-sm py-4">No photos yet — upload some above.</p>
+              <p className="text-center text-muted-foreground text-sm py-4">No photos yet — paste a URL above to add some.</p>
             ) : (
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                 {localImageUrls.map((url, i) => (
