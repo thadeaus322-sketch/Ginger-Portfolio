@@ -4,42 +4,24 @@ import { motion, AnimatePresence, useScroll, useTransform, useInView } from "fra
 const VIDEO_SRC = "/images/client-video-1.mp4";
 
 const PROJECTS = [
-  { id: 1, frame: "001", title: "The Kafidiyas",       sub: "A Short Story of an Unending Love", cat: "Wedding Film",     duration: "4:20", year: "2025", src: VIDEO_SRC },
-  { id: 2, frame: "002", title: "Elevate Boutique",    sub: "Dressed in confidence",              cat: "Brand Commercial", duration: "1:45", year: "2025", src: null },
-  { id: 3, frame: "003", title: "South Kitchen",       sub: "Food is an emotion",                 cat: "Commercial",       duration: "2:10", year: "2024", src: null },
-  { id: 4, frame: "004", title: "The Archers Evening", sub: "An evening worth remembering",        cat: "Event Highlight",  duration: "3:10", year: "2025", src: null },
-  { id: 5, frame: "005", title: "Jisola 30th",         sub: "Thirty and thriving",                cat: "Birthday Reel",    duration: "1:15", year: "2025", src: null },
-  { id: 6, frame: "006", title: "Aisha & Tobi",        sub: "Where two worlds meet",              cat: "Wedding Film",     duration: "5:20", year: "2024", src: null },
+  { id: 1, frame: "001", title: "The Kafidiyas",       sub: "A Short Story of an Unending Love", cat: "Wedding Film",     duration: "4:20", year: "2025", src: VIDEO_SRC, thumb: "/images/gen-wedding-1.jpg" },
+  { id: 2, frame: "002", title: "Elevate Boutique",    sub: "Dressed in confidence",              cat: "Brand Commercial", duration: "1:45", year: "2025", src: VIDEO_SRC, thumb: "/images/gen-brand-film-1.jpg" },
+  { id: 3, frame: "003", title: "South Kitchen",       sub: "Food is an emotion",                 cat: "Commercial",       duration: "2:10", year: "2024", src: VIDEO_SRC, thumb: "/images/food-1.jpg" },
+  { id: 4, frame: "004", title: "The Archers Evening", sub: "An evening worth remembering",       cat: "Event Highlight",  duration: "3:10", year: "2025", src: VIDEO_SRC, thumb: "/images/gen-event-1.jpg" },
+  { id: 5, frame: "005", title: "Jisola 30th",         sub: "Thirty and thriving",                cat: "Birthday Reel",    duration: "1:15", year: "2025", src: VIDEO_SRC, thumb: "/images/gen-birthday-1.jpg" },
+  { id: 6, frame: "006", title: "Aisha & Tobi",        sub: "Where two worlds meet",              cat: "Wedding Film",     duration: "5:20", year: "2024", src: VIDEO_SRC, thumb: "/images/gen-wedding-2.jpg" },
 ];
 
-const WORD_VARIANTS = {
-  hidden: { y: "110%", opacity: 0 },
-  visible: (i: number) => ({
-    y: 0, opacity: 1,
-    transition: { delay: i * 0.13, duration: 0.75, ease: [0.16, 1, 0.3, 1] },
-  }),
-};
-
-// ─── Animated headline ────────────────────────────────────────────────────────
-function AnimHeadline({ text, className, delayStart = 0 }: { text: string; className?: string; delayStart?: number }) {
-  const words = text.split(" ");
+// ─── Grain overlay ────────────────────────────────────────────────────────────
+function Grain() {
   return (
-    <span className={className} aria-label={text}>
-      {words.map((word, i) => (
-        <span key={i} className="inline-block overflow-hidden mr-[0.22em] mb-1">
-          <motion.span
-            className="inline-block"
-            custom={delayStart + i}
-            variants={WORD_VARIANTS}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            {word}
-          </motion.span>
-        </span>
-      ))}
-    </span>
+    <div
+      className="pointer-events-none fixed inset-0 z-[900] opacity-[0.025] mix-blend-overlay"
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+        backgroundSize: "128px 128px",
+      }}
+    />
   );
 }
 
@@ -49,77 +31,94 @@ function VideoHero({ onWatch }: { onWatch: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end start"] });
-  const y = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const yVid = useTransform(scrollYProgress, [0, 1], ["0%", "28%"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
+  const barsScale = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
 
   useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    v.play().catch(() => {});
+    videoRef.current?.play().catch(() => {});
   }, []);
 
   return (
-    <section ref={containerRef} className="relative w-full overflow-hidden" style={{ height: "100svh", minHeight: 600 }}>
-
-      {/* Parallax video layer */}
-      <motion.div className="absolute inset-0" style={{ y }}>
+    <section
+      ref={containerRef}
+      className="relative w-full overflow-hidden"
+      style={{ height: "100svh", minHeight: 620, background: "#0D0B09" }}
+    >
+      {/* Parallax video */}
+      <motion.div className="absolute inset-0" style={{ y: yVid }}>
         <video
           ref={videoRef}
           src={VIDEO_SRC}
           muted loop playsInline preload="auto"
           className="w-full h-full object-cover"
         />
-        {/* Subtle vignette — keeps text readable without killing the video */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-black/60 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/25 via-transparent to-transparent pointer-events-none" />
       </motion.div>
 
-      {/* Dark bg visible only before video loads */}
-      <div className="absolute inset-0 bg-[#1a100a] -z-10" />
+      {/* Cinematic vignette */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/70 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent pointer-events-none" />
 
-      {/* REC pill */}
+      {/* Cinematic bars — letterbox */}
       <motion.div
-        initial={{ opacity: 0, y: -10 }}
+        className="absolute top-0 inset-x-0 bg-black origin-top pointer-events-none z-30"
+        style={{ height: "8vh", scaleY: barsScale }}
+      />
+      <motion.div
+        className="absolute bottom-0 inset-x-0 bg-black origin-bottom pointer-events-none z-30"
+        style={{ height: "8vh", scaleY: barsScale }}
+      />
+
+      {/* REC indicator */}
+      <motion.div
+        initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="absolute top-8 left-8 z-20 flex items-center gap-2 bg-black/40 backdrop-blur-sm border border-white/10 px-3 py-1.5 rounded-full"
+        transition={{ delay: 0.5 }}
+        className="absolute top-9 left-8 z-20 flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm border border-white/10"
       >
         <motion.div
           className="w-2 h-2 rounded-full bg-[#F0961B]"
-          animate={{ opacity: [1, 0.2, 1] }}
-          transition={{ repeat: Infinity, duration: 1.4 }}
+          animate={{ opacity: [1, 0.15, 1] }}
+          transition={{ repeat: Infinity, duration: 1.3 }}
         />
-        <span className="font-mono text-[9px] text-white/70 tracking-[0.25em] uppercase">REC • GVS 2025</span>
+        <span className="font-mono text-[9px] text-white/60 tracking-[0.3em] uppercase">REC · GVS 2025</span>
       </motion.div>
 
       {/* Frame counter */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.8 }}
-        className="absolute top-8 right-8 z-20 font-mono text-[10px] text-white/40 tracking-widest"
+        transition={{ delay: 0.7 }}
+        className="absolute top-9 right-8 z-20 font-mono text-[10px] text-white/30 tracking-[0.2em]"
       >
         001 / 006
       </motion.div>
 
       {/* Hero copy */}
       <motion.div
-        className="absolute inset-0 z-10 flex flex-col justify-center px-8 md:px-16 lg:px-24"
+        className="absolute inset-0 z-10 flex flex-col justify-center px-8 md:px-16 lg:px-24 pt-[8vh]"
         style={{ opacity }}
       >
-        <p className="font-mono text-[#F0961B] text-[10px] tracking-[0.45em] uppercase mb-6">
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.7 }}
+          className="font-mono text-[#F0961B] text-[10px] tracking-[0.55em] uppercase mb-8"
+        >
           Ginger Studios · Motion
-        </p>
+        </motion.p>
 
-        <h1 className="font-serif text-white leading-[0.9] tracking-tight mb-8 overflow-hidden"
-          style={{ fontSize: "clamp(64px, 10vw, 148px)" }}>
+        <h1
+          className="font-serif text-white leading-[0.88] tracking-tight mb-10 overflow-hidden"
+          style={{ fontSize: "clamp(60px, 11vw, 160px)" }}
+        >
           {"We make".split(" ").map((word, i) => (
-            <span key={i} className="inline-block overflow-hidden mr-[0.22em]">
+            <span key={i} className="inline-block overflow-hidden mr-[0.2em]">
               <motion.span
                 className="inline-block"
-                initial={{ y: "110%", opacity: 0 }}
+                initial={{ y: "115%", opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 + i * 0.13, duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ delay: 0.2 + i * 0.12, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
               >
                 {word}
               </motion.span>
@@ -129,9 +128,9 @@ function VideoHero({ onWatch }: { onWatch: () => void }) {
           <span className="inline-block overflow-hidden">
             <motion.span
               className="inline-block text-[#F0961B] italic"
-              initial={{ y: "110%", opacity: 0 }}
+              initial={{ y: "115%", opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.48, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ delay: 0.44, duration: 0.95, ease: [0.16, 1, 0.3, 1] }}
             >
               films.
             </motion.span>
@@ -139,165 +138,177 @@ function VideoHero({ onWatch }: { onWatch: () => void }) {
         </h1>
 
         <motion.p
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.8 }}
-          className="font-serif italic text-white/50 text-xl md:text-2xl max-w-md mb-12"
+          className="font-serif italic text-white/45 text-xl md:text-2xl max-w-sm mb-14"
         >
           Every frame, a feeling. Every second, preserved.
         </motion.p>
 
-        {/* Watch CTA */}
         <motion.button
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1, duration: 0.7 }}
           onClick={onWatch}
           className="group w-fit flex items-center gap-4"
         >
           <motion.div
-            className="w-14 h-14 rounded-full bg-[#F0961B] flex items-center justify-center"
-            whileHover={{ scale: 1.1 }}
+            className="w-16 h-16 rounded-full border-2 border-[#F0961B] flex items-center justify-center"
+            whileHover={{ scale: 1.12, backgroundColor: "rgba(240,150,27,0.15)" }}
             whileTap={{ scale: 0.95 }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z" /></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#F0961B"><path d="M8 5v14l11-7z" /></svg>
           </motion.div>
           <div className="text-left">
-            <p className="text-white font-serif text-lg group-hover:text-[#F0961B] transition-colors">
+            <p className="text-white font-serif text-lg group-hover:text-[#F0961B] transition-colors duration-300">
               Watch The Kafidiyas
             </p>
-            <p className="text-white/40 font-mono text-[10px] tracking-widest">WEDDING FILM · 4:20</p>
+            <p className="text-white/35 font-mono text-[10px] tracking-[0.25em] uppercase mt-0.5">Wedding Film · 4:20</p>
           </div>
         </motion.button>
       </motion.div>
 
       {/* Scroll hint */}
       <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2"
+        className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.4 }}
+        transition={{ delay: 1.5 }}
       >
         <motion.div
-          className="w-px h-10 bg-gradient-to-b from-[#F0961B] to-transparent"
+          className="w-px h-12 bg-gradient-to-b from-[#F0961B] to-transparent"
           animate={{ scaleY: [0, 1, 0], originY: 0 }}
-          transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
+          transition={{ repeat: Infinity, duration: 1.7, ease: "easeInOut" }}
         />
-        <span className="font-mono text-[8px] text-white/30 tracking-[0.3em] uppercase">Scroll</span>
+        <span className="font-mono text-[8px] text-white/25 tracking-[0.35em] uppercase">Scroll</span>
       </motion.div>
     </section>
   );
 }
 
-// ─── Featured film card (cream bg, video visible) ────────────────────────────
-function FeaturedFilm({ onWatch }: { onWatch: () => void }) {
+// ─── Showreel / Featured section ──────────────────────────────────────────────
+function Showreel({ onWatch }: { onWatch: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
-  const previewRef = useRef<HTMLVideoElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [hovered, setHovered] = useState(false);
 
-  // Autoplay muted from mount so the video is always visible
   useEffect(() => {
-    const v = previewRef.current;
-    if (!v) return;
-    v.play().catch(() => {});
+    videoRef.current?.play().catch(() => {});
   }, []);
 
   return (
-    <section className="bg-[#FBF6EE] py-24 lg:py-40 px-8 md:px-16 lg:px-24 overflow-hidden">
-      <div className="max-w-[1400px] mx-auto">
-        {/* Section label */}
+    <section className="bg-[#0D0B09] py-28 lg:py-44 px-6 md:px-14 lg:px-20 overflow-hidden">
+      <div className="max-w-[1500px] mx-auto">
+        {/* Label row */}
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
+          initial={{ opacity: 0, x: -16 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="flex items-center gap-4 mb-16"
+          className="flex items-center gap-5 mb-14"
         >
-          <div className="w-10 h-px bg-[#F0961B]" />
-          <span className="font-mono text-[10px] text-[#211C17]/50 tracking-[0.35em] uppercase">
-            Featured Film · 001
-          </span>
+          <div className="w-12 h-px bg-[#F0961B]" />
+          <span className="font-mono text-[10px] text-white/35 tracking-[0.4em] uppercase">Featured Film · 001</span>
         </motion.div>
 
-        <div ref={ref} className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-          {/* Video player */}
+        {/* Main split */}
+        <div ref={ref} className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10 lg:gap-20 items-center">
+          {/* Video */}
           <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
+            initial={{ opacity: 0, y: 40 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-            className="relative aspect-video bg-[#211C17] rounded-2xl overflow-hidden cursor-pointer group shadow-[0_32px_80px_-16px_rgba(33,28,23,0.35)]"
+            className="relative aspect-video rounded-xl overflow-hidden cursor-pointer group"
+            style={{ boxShadow: "0 40px 120px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05)" }}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             onClick={onWatch}
           >
+            {/* Video playing muted as preview */}
             <video
-              ref={previewRef}
+              ref={videoRef}
               src={VIDEO_SRC}
-              muted loop playsInline preload="metadata"
-              className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105"
+              muted loop playsInline preload="auto"
+              className="w-full h-full object-cover transition-transform duration-[2.5s] group-hover:scale-[1.04]"
             />
-            {/* Dark scrim */}
-            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700" />
 
-            {/* Play button */}
+            {/* Scrim */}
+            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-700" />
+
+            {/* Top-left badge */}
+            <div className="absolute top-5 left-5 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#F0961B]" />
+              <span className="font-mono text-[8px] text-white/70 tracking-[0.25em] uppercase">Wedding Film</span>
+            </div>
+
+            {/* Duration */}
+            <div className="absolute top-5 right-5 font-mono text-[10px] text-white/50 tracking-widest bg-black/50 backdrop-blur-sm px-2.5 py-1 rounded">
+              4:20
+            </div>
+
+            {/* Center play */}
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.div
-                className="w-20 h-20 rounded-full bg-[#F0961B] flex items-center justify-center shadow-2xl"
-                whileHover={{ scale: 1.15 }}
-                whileTap={{ scale: 0.95 }}
-                animate={{ scale: hovered ? 1.1 : 1 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="w-20 h-20 rounded-full border-2 border-[#F0961B]/60 flex items-center justify-center"
+                animate={{
+                  scale: hovered ? 1.15 : 1,
+                  borderColor: hovered ? "rgba(240,150,27,1)" : "rgba(240,150,27,0.6)",
+                  backgroundColor: hovered ? "rgba(240,150,27,0.18)" : "rgba(240,150,27,0)",
+                }}
+                transition={{ type: "spring", stiffness: 260, damping: 22 }}
               >
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="white">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z" /></svg>
               </motion.div>
             </div>
 
-            {/* Badge */}
-            <div className="absolute top-5 left-5 bg-[#F0961B] px-3 py-1 rounded-sm">
-              <span className="font-mono text-[9px] text-white tracking-[0.25em] uppercase font-bold">Wedding Film</span>
-            </div>
-            <div className="absolute bottom-5 right-5 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-sm border border-white/10">
-              <span className="font-mono text-[10px] text-white/80 tracking-widest">4:20</span>
-            </div>
+            {/* Bottom info bar */}
+            <motion.div
+              className="absolute bottom-0 inset-x-0 p-5 bg-gradient-to-t from-black/80 to-transparent"
+              initial={{ opacity: 0, y: 8 }}
+              animate={hovered ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+              transition={{ duration: 0.35 }}
+            >
+              <p className="font-serif text-white text-lg">The Kafidiyas</p>
+              <p className="font-mono text-[9px] text-white/50 tracking-widest mt-1 uppercase">Click to watch full film</p>
+            </motion.div>
           </motion.div>
 
           {/* Copy */}
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
+            initial={{ opacity: 0, x: 30 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.9, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
           >
-            <p className="font-mono text-[#F0961B] text-[10px] tracking-[0.4em] uppercase mb-5">2025</p>
-            <h2 className="font-serif text-[#211C17] text-5xl md:text-6xl leading-[1.05] mb-6">
+            <p className="font-mono text-[#F0961B] text-[10px] tracking-[0.45em] uppercase mb-6">2025</p>
+            <h2 className="font-serif text-white leading-[1.0] mb-5" style={{ fontSize: "clamp(36px, 4.5vw, 64px)" }}>
               The Kafidiyas
             </h2>
-            <p className="font-serif italic text-[#211C17]/50 text-2xl mb-8">
+            <p className="font-serif italic text-white/40 text-xl mb-7">
               A Short Story of an Unending Love
             </p>
-            <p className="font-sans text-[#211C17]/60 text-base leading-relaxed mb-12 max-w-sm">
+            <p className="font-sans text-white/35 text-sm leading-relaxed mb-10 max-w-xs">
               From a quiet morning in Abeokuta to a rooftop celebration under the stars — this is the full cinematic record of a love story that refused to be ordinary.
             </p>
 
-            <div className="flex items-center gap-6 mb-12">
+            <div className="grid grid-cols-3 gap-6 mb-12 border-t border-b border-white/8 py-7">
               {[["Duration", "4:20"], ["Year", "2025"], ["Type", "Wedding"]].map(([k, v]) => (
                 <div key={k}>
-                  <p className="font-mono text-[8px] text-[#211C17]/40 tracking-[0.25em] uppercase mb-1">{k}</p>
-                  <p className="font-serif text-[#211C17] text-lg">{v}</p>
+                  <p className="font-mono text-[8px] text-white/25 tracking-[0.3em] uppercase mb-2">{k}</p>
+                  <p className="font-serif text-white/80 text-lg">{v}</p>
                 </div>
               ))}
             </div>
 
             <motion.button
               onClick={onWatch}
-              className="group flex items-center gap-3 bg-[#211C17] text-[#FBF6EE] px-8 py-4 rounded-sm font-sans text-sm tracking-[0.15em] uppercase font-bold hover:bg-[#F0961B] transition-colors duration-400"
+              className="group flex items-center gap-3 border border-[#F0961B]/50 hover:border-[#F0961B] hover:bg-[#F0961B]/10 text-[#F0961B] px-7 py-4 rounded-sm font-mono text-[10px] tracking-[0.25em] uppercase transition-all duration-300"
               whileHover={{ x: 4 }}
               whileTap={{ scale: 0.97 }}
             >
               Watch Full Film
-              <svg className="group-hover:translate-x-1 transition-transform" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="group-hover:translate-x-1 transition-transform" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </motion.button>
@@ -308,160 +319,213 @@ function FeaturedFilm({ onWatch }: { onWatch: () => void }) {
   );
 }
 
-// ─── Film strip (CSS only) ────────────────────────────────────────────────────
-function FilmStrip() {
+// ─── Divider strip ────────────────────────────────────────────────────────────
+function FilmDivider() {
   const items = [
-    "WEDDING · 2025", "BRAND FILM · 2025", "COMMERCIAL · 2024", "EVENT · 2025",
-    "PORTRAIT · 2025", "BIRTHDAY REEL · 2025", "WEDDING · 2024", "DOCUMENTARY · 2024",
+    "WEDDING · 2025", "BRAND FILM · 2025", "COMMERCIAL · 2024",
+    "EVENT · 2025", "PORTRAIT · 2025", "BIRTHDAY · 2025",
+    "WEDDING · 2024", "DOCUMENTARY · 2024",
   ];
   const doubled = [...items, ...items];
-
   return (
-    <div className="w-full overflow-hidden bg-[#211C17] border-y border-[#FBF6EE]/5">
-      {/* Top sprockets */}
-      <div className="h-7 bg-[#111] flex items-center justify-around px-2">
-        {[...Array(60)].map((_, i) => (
-          <div key={i} className="w-3.5 h-4 rounded-[2px] bg-[#211C17] border border-[#333] flex-shrink-0" />
+    <div className="w-full overflow-hidden border-y border-white/5 bg-[#0D0B09]">
+      <div className="h-6 bg-[#090806] flex items-center justify-around px-2">
+        {[...Array(64)].map((_, i) => (
+          <div key={i} className="w-3 h-3.5 rounded-[2px] bg-[#161210] border border-[#222] flex-shrink-0" />
         ))}
       </div>
-
-      <div className="relative overflow-hidden" style={{ height: 130 }}>
+      <div className="relative overflow-hidden" style={{ height: 96 }}>
         <motion.div
           animate={{ x: ["0%", "-50%"] }}
-          transition={{ repeat: Infinity, ease: "linear", duration: 50 }}
+          transition={{ repeat: Infinity, ease: "linear", duration: 55 }}
           className="absolute top-0 left-0 flex h-full"
         >
           {doubled.map((label, i) => (
             <div
               key={i}
-              className="flex-shrink-0 h-full flex flex-col items-center justify-center border-r border-[#FBF6EE]/5 relative"
-              style={{ width: 170 }}
+              className="flex-shrink-0 h-full flex flex-col items-center justify-center border-r border-white/5 relative"
+              style={{ width: 160 }}
             >
-              {/* Warm amber tint frame */}
-              <div className="absolute inset-0 bg-gradient-to-br from-[#F0961B]/4 to-transparent" />
-              <span className="font-mono text-[#F0961B]/15 text-4xl font-bold mb-1">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#F0961B]/3 to-transparent" />
+              <span className="font-mono text-[#F0961B]/10 text-3xl font-bold mb-1">
                 {String((i % 8) + 1).padStart(4, "0")}
               </span>
-              <span className="font-mono text-[9px] text-[#FBF6EE]/25 tracking-[0.2em] uppercase text-center px-2">
+              <span className="font-mono text-[8px] text-white/20 tracking-[0.18em] uppercase text-center px-2">
                 {label}
               </span>
             </div>
           ))}
         </motion.div>
       </div>
-
-      {/* Bottom sprockets */}
-      <div className="h-7 bg-[#111] flex items-center justify-around px-2">
-        {[...Array(60)].map((_, i) => (
-          <div key={i} className="w-3.5 h-4 rounded-[2px] bg-[#211C17] border border-[#333] flex-shrink-0" />
+      <div className="h-6 bg-[#090806] flex items-center justify-around px-2">
+        {[...Array(64)].map((_, i) => (
+          <div key={i} className="w-3 h-3.5 rounded-[2px] bg-[#161210] border border-[#222] flex-shrink-0" />
         ))}
       </div>
     </div>
   );
 }
 
-// ─── Project grid ─────────────────────────────────────────────────────────────
-function ProjectsGrid({ onPlayVideo }: { onPlayVideo: (src: string) => void }) {
-  return (
-    <section className="bg-[#FBF6EE] py-24 lg:py-40 px-8 md:px-16 lg:px-24">
-      <div className="max-w-[1400px] mx-auto">
+// ─── Film index (6-card grid with real thumbnails) ───────────────────────────
+function FilmIndex({ onPlayVideo }: { onPlayVideo: (src: string) => void }) {
+  const [hoveredId, setHoveredId] = useState<number | null>(null);
 
+  return (
+    <section className="bg-[#0D0B09] py-28 lg:py-44 px-6 md:px-14 lg:px-20">
+      <div className="max-w-[1500px] mx-auto">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20">
-          <h2 className="font-serif text-[#211C17] leading-tight"
-            style={{ fontSize: "clamp(40px, 6vw, 80px)" }}>
-            <AnimHeadline text="Our films." />
-          </h2>
-          <p className="font-sans text-[#211C17]/50 text-base max-w-xs leading-relaxed">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-20">
+          <div>
+            <motion.p
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="font-mono text-[#F0961B] text-[10px] tracking-[0.5em] uppercase mb-5"
+            >
+              Film Catalogue
+            </motion.p>
+            <h2
+              className="font-serif text-white leading-[0.92]"
+              style={{ fontSize: "clamp(42px, 7vw, 96px)" }}
+            >
+              <motion.span
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                className="inline-block"
+              >
+                Our films.
+              </motion.span>
+            </h2>
+          </div>
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="font-sans text-white/30 text-sm max-w-[260px] leading-relaxed pb-2"
+          >
             Six stories. Shot with intention. Delivered with care.
-          </p>
+          </motion.p>
         </div>
 
-        {/* Grid — skip first (featured above) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {PROJECTS.slice(1).map((p, i) => (
+        {/* Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-white/5">
+          {PROJECTS.map((p, i) => (
             <motion.div
               key={p.id}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
               viewport={{ once: true, margin: "-60px" }}
-              transition={{ delay: i * 0.1, duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
-              className="group cursor-pointer"
-              onClick={() => p.src && onPlayVideo(p.src)}
+              transition={{ delay: i * 0.08, duration: 0.65 }}
+              className="relative bg-[#0D0B09] cursor-pointer group overflow-hidden"
+              style={{ aspectRatio: "4/3" }}
+              onClick={() => onPlayVideo(p.src)}
+              onMouseEnter={() => setHoveredId(p.id)}
+              onMouseLeave={() => setHoveredId(null)}
             >
-              {/* Card face */}
-              <div className="relative aspect-[4/3] bg-[#211C17] rounded-xl overflow-hidden mb-5">
-                {/* Warm gradient pattern */}
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background: `radial-gradient(ellipse at ${20 + i * 15}% ${30 + i * 10}%, rgba(240,150,27,0.18) 0%, transparent 65%)`,
-                  }}
-                />
-                {/* Grid texture */}
-                <div className="absolute inset-0 opacity-[0.04]"
-                  style={{ backgroundImage: "linear-gradient(#FBF6EE 1px, transparent 1px), linear-gradient(90deg, #FBF6EE 1px, transparent 1px)", backgroundSize: "32px 32px" }}
-                />
-
-                {/* Frame number */}
-                <div className="absolute top-4 left-4 font-mono text-white/20 text-xs tracking-widest">{p.frame}</div>
-
-                {/* Category pill */}
-                <div className="absolute top-4 right-4 bg-[#F0961B]/15 border border-[#F0961B]/30 px-3 py-1 rounded-full">
-                  <span className="font-mono text-[8px] text-[#F0961B] tracking-[0.25em] uppercase">{p.cat}</span>
-                </div>
-
-                {/* Center icon */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  {p.src ? (
-                    <motion.div
-                      className="w-14 h-14 rounded-full border-2 border-[#F0961B]/40 group-hover:border-[#F0961B] group-hover:bg-[#F0961B]/10 flex items-center justify-center transition-colors duration-500"
-                      whileHover={{ scale: 1.15 }}
-                    >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z" /></svg>
-                    </motion.div>
-                  ) : (
-                    <div className="w-14 h-14 rounded-full border border-white/10 flex items-center justify-center">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5">
-                        <circle cx="12" cy="12" r="10" /><path d="M12 8v4l3 3" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-
-                {/* Amber hover glow */}
-                <motion.div
-                  className="absolute inset-0 pointer-events-none rounded-xl"
-                  initial={{ opacity: 0 }}
-                  whileHover={{ opacity: 1 }}
-                  style={{ boxShadow: "inset 0 0 60px rgba(240,150,27,0.10)" }}
-                />
-
-                {/* Duration bottom */}
-                <div className="absolute bottom-4 right-4 font-mono text-xs text-white/35 tracking-widest">{p.duration}</div>
-              </div>
-
-              {/* Card text */}
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-serif text-[#211C17] text-2xl group-hover:text-[#F0961B] transition-colors duration-400 mb-1">
-                    {p.title}
-                  </h3>
-                  <p className="font-serif italic text-[#211C17]/40 text-sm">{p.sub}</p>
-                </div>
-                <span className="font-mono text-[9px] text-[#211C17]/30 tracking-widest mt-1.5">{p.year}</span>
-              </div>
-
-              {/* Underline reveal */}
-              <motion.div
-                className="h-px bg-[#F0961B] mt-4 origin-left"
-                initial={{ scaleX: 0 }}
-                whileHover={{ scaleX: 1 }}
-                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              {/* Thumbnail image */}
+              <motion.img
+                src={p.thumb}
+                alt={p.title}
+                className="absolute inset-0 w-full h-full object-cover"
+                animate={{ scale: hoveredId === p.id ? 1.08 : 1 }}
+                transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
               />
+
+              {/* Persistent dark overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/20" />
+
+              {/* Hover amber tint */}
+              <motion.div
+                className="absolute inset-0 bg-[#F0961B]/10 pointer-events-none"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: hoveredId === p.id ? 1 : 0 }}
+                transition={{ duration: 0.45 }}
+              />
+
+              {/* Frame # top-left */}
+              <div className="absolute top-5 left-5 font-mono text-[10px] text-white/30 tracking-widest">{p.frame}</div>
+
+              {/* Category top-right */}
+              <div className="absolute top-5 right-5">
+                <span className="font-mono text-[8px] text-white/50 tracking-[0.2em] uppercase">{p.cat}</span>
+              </div>
+
+              {/* Play button center */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <motion.div
+                  className="w-16 h-16 rounded-full border-2 flex items-center justify-center"
+                  animate={{
+                    scale: hoveredId === p.id ? 1.15 : 0.85,
+                    opacity: hoveredId === p.id ? 1 : 0.4,
+                    borderColor: hoveredId === p.id ? "#F0961B" : "rgba(255,255,255,0.4)",
+                    backgroundColor: hoveredId === p.id ? "rgba(240,150,27,0.2)" : "transparent",
+                  }}
+                  transition={{ type: "spring", stiffness: 280, damping: 24 }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z" /></svg>
+                </motion.div>
+              </div>
+
+              {/* Bottom info */}
+              <div className="absolute bottom-0 inset-x-0 p-5">
+                <div className="flex items-end justify-between">
+                  <div>
+                    <motion.h3
+                      className="font-serif text-xl leading-tight mb-1"
+                      animate={{ color: hoveredId === p.id ? "#F0961B" : "#F5F0E8" }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {p.title}
+                    </motion.h3>
+                    <p className="font-serif italic text-white/40 text-xs">{p.sub}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0 ml-4">
+                    <p className="font-mono text-[10px] text-white/30 tracking-widest">{p.duration}</p>
+                    <p className="font-mono text-[9px] text-white/20 tracking-widest mt-0.5">{p.year}</p>
+                  </div>
+                </div>
+                {/* Amber underline reveal */}
+                <motion.div
+                  className="h-px mt-4 bg-[#F0961B] origin-left"
+                  animate={{ scaleX: hoveredId === p.id ? 1 : 0 }}
+                  transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                />
+              </div>
             </motion.div>
           ))}
         </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Stats ────────────────────────────────────────────────────────────────────
+function Stats() {
+  const stats = [
+    { num: "100+", label: "Films Delivered" },
+    { num: "240+", label: "Happy Clients" },
+    { num: "4.9★", label: "Client Rating" },
+    { num: "7",    label: "Years Shooting" },
+  ];
+  return (
+    <section className="bg-[#090806] py-24 px-6 md:px-14 lg:px-20 border-t border-white/5">
+      <div className="max-w-[1500px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-px bg-white/5">
+        {stats.map((s, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: i * 0.1, duration: 0.65 }}
+            className="flex flex-col items-center justify-center py-16 bg-[#090806] hover:bg-[#111009] transition-colors"
+          >
+            <span className="font-serif text-5xl md:text-6xl text-[#F0961B] mb-3">{s.num}</span>
+            <span className="font-mono text-[9px] text-white/30 tracking-[0.32em] uppercase">{s.label}</span>
+          </motion.div>
+        ))}
       </div>
     </section>
   );
@@ -471,53 +535,24 @@ function ProjectsGrid({ onPlayVideo }: { onPlayVideo: (src: string) => void }) {
 function ServicesMarquee() {
   const items = ["Wedding Films", "Brand Commercials", "Event Highlights", "Birthday Reels", "Product Videos", "Documentaries"];
   return (
-    <div className="w-full bg-[#5C1A20] py-14 overflow-hidden border-y border-white/5">
+    <div className="w-full bg-[#3A0E12] py-14 overflow-hidden border-t border-white/5">
       <motion.div
         animate={{ x: ["0%", "-50%"] }}
-        transition={{ repeat: Infinity, ease: "linear", duration: 35 }}
+        transition={{ repeat: Infinity, ease: "linear", duration: 38 }}
         className="flex whitespace-nowrap"
       >
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="flex items-center px-6 gap-10 text-[#FBF6EE] text-3xl md:text-4xl font-serif italic">
+          <div key={i} className="flex items-center px-8 gap-10 text-[#F5F0E8] text-3xl md:text-4xl font-serif italic">
             {items.map((s, j) => (
               <span key={j} className="flex items-center gap-10">
                 {s}
-                <span className="text-[#F0961B] opacity-40 not-italic">·</span>
+                <span className="text-[#F0961B] opacity-30 not-italic">·</span>
               </span>
             ))}
           </div>
         ))}
       </motion.div>
     </div>
-  );
-}
-
-// ─── Stats section ────────────────────────────────────────────────────────────
-function Stats() {
-  const stats = [
-    { num: "100+", label: "Films Delivered" },
-    { num: "240+", label: "Happy Clients" },
-    { num: "4.9★", label: "Client Rating" },
-    { num: "7",    label: "Years Shooting" },
-  ];
-  return (
-    <section className="bg-[#211C17] py-24 px-8 md:px-16 lg:px-24">
-      <div className="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-px bg-[#FBF6EE]/5">
-        {stats.map((s, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.1, duration: 0.7 }}
-            className="flex flex-col items-center justify-center py-16 bg-[#211C17] group hover:bg-[#261F1A] transition-colors"
-          >
-            <span className="font-serif text-5xl md:text-6xl text-[#F0961B] mb-3">{s.num}</span>
-            <span className="font-mono text-[9px] text-[#FBF6EE]/40 tracking-[0.3em] uppercase">{s.label}</span>
-          </motion.div>
-        ))}
-      </div>
-    </section>
   );
 }
 
@@ -537,23 +572,19 @@ function VideoModal({ src, onClose }: { src: string; onClose: () => void }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
-      className="fixed inset-0 z-[300] flex items-center justify-center bg-black"
+      className="fixed inset-0 z-[500] bg-black flex items-center justify-center"
     >
-      {/* Letterbox bars */}
-      <motion.div
-        className="absolute top-0 left-0 right-0 bg-black z-10 origin-top"
-        initial={{ scaleY: 1 }}
-        animate={{ scaleY: 0 }}
-        transition={{ delay: 0.2, duration: 0.5, ease: [0.76, 0, 0.24, 1] }}
-        style={{ height: "12vh" }}
-      />
-      <motion.div
-        className="absolute bottom-0 left-0 right-0 bg-black z-10 origin-bottom"
-        initial={{ scaleY: 1 }}
-        animate={{ scaleY: 0 }}
-        transition={{ delay: 0.2, duration: 0.5, ease: [0.76, 0, 0.24, 1] }}
-        style={{ height: "12vh" }}
-      />
+      {/* Letterbox animation */}
+      {(["top", "bottom"] as const).map(pos => (
+        <motion.div
+          key={pos}
+          className={`absolute ${pos}-0 inset-x-0 bg-black z-10`}
+          style={{ height: "10vh", originY: pos === "top" ? "top" : "bottom" }}
+          initial={{ scaleY: 1 }}
+          animate={{ scaleY: 0 }}
+          transition={{ delay: 0.15, duration: 0.55, ease: [0.76, 0, 0.24, 1] }}
+        />
+      ))}
 
       <video
         key={src}
@@ -572,17 +603,16 @@ function VideoModal({ src, onClose }: { src: string; onClose: () => void }) {
         </svg>
       </button>
 
-      {/* Info bar */}
       {project && (
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="absolute bottom-5 left-8 z-20 flex items-center gap-5"
+          className="absolute bottom-6 left-8 z-20 flex items-center gap-5"
         >
           <span className="font-mono text-[9px] text-[#F0961B] tracking-[0.3em] uppercase">{project.cat}</span>
-          <span className="font-serif text-white/60 text-sm">{project.title}</span>
-          <span className="font-mono text-[9px] text-white/30">{project.frame} / 006</span>
+          <span className="font-serif text-white/55 text-sm">{project.title}</span>
+          <span className="font-mono text-[9px] text-white/25">{project.frame} / 006</span>
         </motion.div>
       )}
     </motion.div>
@@ -594,11 +624,12 @@ export default function Videography() {
   const [playingSrc, setPlayingSrc] = useState<string | null>(null);
 
   return (
-    <div className="w-full flex flex-col bg-[#FBF6EE] overflow-hidden">
+    <div className="w-full flex flex-col" style={{ background: "#0D0B09" }}>
+      <Grain />
       <VideoHero onWatch={() => setPlayingSrc(VIDEO_SRC)} />
-      <FeaturedFilm onWatch={() => setPlayingSrc(VIDEO_SRC)} />
-      <FilmStrip />
-      <ProjectsGrid onPlayVideo={setPlayingSrc} />
+      <Showreel onWatch={() => setPlayingSrc(VIDEO_SRC)} />
+      <FilmDivider />
+      <FilmIndex onPlayVideo={setPlayingSrc} />
       <Stats />
       <ServicesMarquee />
 
