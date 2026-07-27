@@ -1,0 +1,1 @@
+- [Object Storage Setup](object-storage-setup.md) — `PRIVATE_OBJECT_DIR` stays empty until `setupObjectStorage()` is called from CodeExecution; listing the secret ≠ having a value.
