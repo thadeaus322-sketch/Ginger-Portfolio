@@ -10,48 +10,50 @@ const WA_CONTACT = "https://wa.me/2347067310008?text=Hi%20Ginger%20Studios!%20I%
 const EMAIL      = "hi@gvs.com.ng";
 
 function SaveToGoogleDriveButton({ imageUrls, shootTitle }: { imageUrls: string[]; shootTitle: string }) {
-  const [saving, setSaving] = useState(false);
-  const [done, setDone] = useState(false);
+  const [status, setStatus] = useState<"idle" | "downloading" | "done">("idle");
+  const [progress, setProgress] = useState(0);
 
   const handleSaveToDrive = async () => {
-    setSaving(true);
-    try {
-      // Build a Google Drive upload URL using the "Save to Drive" API
-      // This opens a Google picker that lets clients save photos to their own Drive
-      const driveUrl = `https://drive.google.com/drive/folders`;
-      // Open Google Drive in a new tab — clients can manually upload the downloaded files
-      // For a fully automated experience, a server-side Google Drive API integration is needed
-      window.open(driveUrl, "_blank", "noopener,noreferrer");
+    if (imageUrls.length === 0) return;
+    setStatus("downloading");
+    setProgress(0);
 
-      // Trigger download of all images so client can easily upload to Drive
+    try {
+      // Step 1: Download all images to the user's device
       for (let i = 0; i < imageUrls.length; i++) {
         await new Promise<void>(resolve => {
           setTimeout(() => {
             const a = document.createElement("a");
             a.href = imageUrls[i];
-            a.download = `${shootTitle.replace(/[^a-z0-9]/gi, "-")}-${i + 1}.jpg`;
+            a.download = `${shootTitle.replace(/[^a-z0-9]/gi, "-")}-photo-${i + 1}.jpg`;
             a.target = "_blank";
             a.rel = "noreferrer";
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
+            setProgress(Math.round(((i + 1) / imageUrls.length) * 100));
             resolve();
-          }, i * 300);
+          }, i * 350);
         });
       }
-      setDone(true);
-      setTimeout(() => setDone(false), 4000);
-    } finally {
-      setSaving(false);
+
+      // Step 2: After downloads complete, open Google Drive so user can upload
+      await new Promise<void>(resolve => setTimeout(resolve, 500));
+      window.open("https://drive.google.com/drive/my-drive", "_blank", "noopener,noreferrer");
+
+      setStatus("done");
+      setTimeout(() => { setStatus("idle"); setProgress(0); }, 6000);
+    } catch {
+      setStatus("idle");
     }
   };
 
   return (
     <button
       onClick={handleSaveToDrive}
-      disabled={saving}
-      className="group relative flex items-center gap-2 px-5 py-2.5 border border-border text-foreground hover:bg-muted transition-colors rounded-sm disabled:opacity-60"
-      title="Download all photos and open Google Drive"
+      disabled={status === "downloading"}
+      className="group relative flex items-center gap-2 px-5 py-2.5 border border-border text-foreground hover:bg-muted transition-colors rounded-sm disabled:opacity-70"
+      title="Download all photos, then open Google Drive to upload them"
     >
       {/* Google Drive icon */}
       <svg width="18" height="18" viewBox="0 0 87.3 78" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -62,7 +64,11 @@ function SaveToGoogleDriveButton({ imageUrls, shootTitle }: { imageUrls: string[
         <path d="M59.8 53H27.5L13.75 76.8h49.9z" fill="#2684FC"/>
         <path d="M73.4 26.5c-.8-1.4-1.95-2.5-3.3-3.3L57.4 0H29.9l13.75 25H87.3c0-1.55-.4-3.1-1.2-4.5z" fill="#FFBA00"/>
       </svg>
-      {saving ? "Opening Drive…" : done ? "✓ Downloads started!" : "Save to Google Drive"}
+      {status === "downloading"
+        ? `Downloading… ${progress}%`
+        : status === "done"
+        ? "✓ Saved — check Downloads & Drive!"
+        : "Save to Google Drive"}
     </button>
   );
 }
