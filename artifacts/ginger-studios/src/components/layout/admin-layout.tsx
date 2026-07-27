@@ -36,6 +36,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     return <div className="min-h-screen flex items-center justify-center bg-background"><div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div></div>;
   }
 
+  // Return null while the redirect useEffect is pending — prevents children from crashing
+  if (!user) return null;
+
   return (
     <div className="min-h-[100dvh] flex flex-col md:flex-row bg-background">
       {/* Sidebar */}

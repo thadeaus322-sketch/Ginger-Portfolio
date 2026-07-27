@@ -1,9 +1,9 @@
-import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
+import { useEffect } from "react";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { PublicLayout } from "./components/layout/public-layout";
 import { AdminLayout } from "./components/layout/admin-layout";
 import Home from "./pages/home";
 import NotFound from "./pages/not-found";
-// Importing pages that will be created
 import Photography from "./pages/photography";
 import Videography from "./pages/videography";
 import ClientGallery from "./pages/client-gallery";
@@ -13,19 +13,25 @@ import NewGallery from "./pages/admin/new-gallery";
 import GalleryDetail from "./pages/admin/gallery-detail";
 import { useGetMe } from "@workspace/api-client-react";
 
-// Admin Protected Route Wrapper
+// Admin Protected Route Wrapper — never call setLocation/Redirect during render
 function ProtectedAdminRoute({ component: Component }: { component: any }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: user, isLoading } = useGetMe({ query: { retry: false } as any });
-  
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      setLocation("/admin");
+    }
+  }, [isLoading, user, setLocation]);
+
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div></div>;
   }
-  
-  if (!user) {
-    return <Redirect to="/admin" />;
-  }
-  
+
+  // Render nothing while the useEffect redirect is pending
+  if (!user) return null;
+
   return <Component />;
 }
 
