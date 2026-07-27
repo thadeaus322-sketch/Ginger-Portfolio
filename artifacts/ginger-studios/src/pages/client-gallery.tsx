@@ -4,6 +4,7 @@ import { useGetPublicGallery, useRecordGalleryView } from "@workspace/api-client
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, Lock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { saveImagesToDrive, GOOGLE_CLIENT_ID } from "@/lib/googleDrive";
 const logoIcon = "/images/logo-icon.png";
 
 const WA_CONTACT = "https://wa.me/2347067310008?text=Hi%20Ginger%20Studios!%20I%27d%20like%20to%20request%20extended%20gallery%20access.";
