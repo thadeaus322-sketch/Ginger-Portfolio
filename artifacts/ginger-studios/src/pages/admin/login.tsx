@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,9 +22,12 @@ export default function AdminLogin() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: user, isLoading: checkingAuth } = useGetMe({ query: { retry: false } as any });
 
-  if (!checkingAuth && user) {
-    setLocation("/admin/dashboard");
-  }
+  // Must be in useEffect — calling setLocation during render causes infinite crash loop
+  useEffect(() => {
+    if (!checkingAuth && user) {
+      setLocation("/admin/dashboard");
+    }
+  }, [checkingAuth, user, setLocation]);
 
   const loginMutation = useAdminLogin();
 

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useGetMe, useAdminLogout } from "@workspace/api-client-react";
 import { LayoutDashboard, Images, PlusCircle, LogOut } from "lucide-react";
@@ -10,12 +11,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   
   const logout = useAdminLogout();
 
-  // If not loading and no user, wouter handles redirect via protected routes in App.tsx
-  // But we can also catch it here defensively
-  if (!isLoading && !user && location.startsWith("/admin") && location !== "/admin") {
-    setLocation("/admin");
-    return null;
-  }
+  // Must be in useEffect — calling setLocation during render causes an infinite crash loop
+  useEffect(() => {
+    if (!isLoading && !user && location.startsWith("/admin") && location !== "/admin") {
+      setLocation("/admin");
+    }
+  }, [isLoading, user, location, setLocation]);
 
   const handleLogout = () => {
     logout.mutate(undefined, {
