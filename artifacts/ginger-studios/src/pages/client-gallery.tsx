@@ -10,66 +10,79 @@ const logoIcon = "/images/logo-icon.png";
 const WA_CONTACT = "https://wa.me/2347067310008?text=Hi%20Ginger%20Studios!%20I%27d%20like%20to%20request%20extended%20gallery%20access.";
 const EMAIL      = "hi@gvs.com.ng";
 
+const DriveIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 87.3 78" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066DA"/>
+    <path d="M43.65 25L29.9 0c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.5c-.8 1.4-1.2 2.95-1.2 4.5h27.5z" fill="#00AC47"/>
+    <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.9 10.85z" fill="#EA4335"/>
+    <path d="M43.65 25L57.4 0H29.9z" fill="#00832D"/>
+    <path d="M59.8 53H27.5L13.75 76.8h49.9z" fill="#2684FC"/>
+    <path d="M73.4 26.5c-.8-1.4-1.95-2.5-3.3-3.3L57.4 0H29.9l13.75 25H87.3c0-1.55-.4-3.1-1.2-4.5z" fill="#FFBA00"/>
+  </svg>
+);
+
 function SaveToGoogleDriveButton({ imageUrls, shootTitle }: { imageUrls: string[]; shootTitle: string }) {
-  const [status, setStatus] = useState<"idle" | "downloading" | "done">("idle");
-  const [progress, setProgress] = useState(0);
+  const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">("idle");
+  const [progress, setProgress] = useState({ uploaded: 0, total: 0 });
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleSaveToDrive = async () => {
     if (imageUrls.length === 0) return;
-    setStatus("downloading");
-    setProgress(0);
+
+    if (!GOOGLE_CLIENT_ID) {
+      setErrorMsg("Google Drive is not configured yet. Please contact the studio.");
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 5000);
+      return;
+    }
+
+    setStatus("uploading");
+    setProgress({ uploaded: 0, total: imageUrls.length });
+    setErrorMsg("");
 
     try {
-      // Step 1: Download all images to the user's device
-      for (let i = 0; i < imageUrls.length; i++) {
-        await new Promise<void>(resolve => {
-          setTimeout(() => {
-            const a = document.createElement("a");
-            a.href = imageUrls[i];
-            a.download = `${shootTitle.replace(/[^a-z0-9]/gi, "-")}-photo-${i + 1}.jpg`;
-            a.target = "_blank";
-            a.rel = "noreferrer";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setProgress(Math.round(((i + 1) / imageUrls.length) * 100));
-            resolve();
-          }, i * 350);
-        });
-      }
-
-      // Step 2: After downloads complete, open Google Drive so user can upload
-      await new Promise<void>(resolve => setTimeout(resolve, 500));
-      window.open("https://drive.google.com/drive/my-drive", "_blank", "noopener,noreferrer");
-
+      await saveImagesToDrive(imageUrls, shootTitle, (p) => setProgress(p));
       setStatus("done");
-      setTimeout(() => { setStatus("idle"); setProgress(0); }, 6000);
-    } catch {
-      setStatus("idle");
+      setTimeout(() => { setStatus("idle"); setProgress({ uploaded: 0, total: 0 }); }, 6000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Upload failed";
+      // User cancelled the OAuth popup — treat as idle, not an error
+      if (msg.toLowerCase().includes("access_denied") || msg.toLowerCase().includes("popup_closed")) {
+        setStatus("idle");
+        return;
+      }
+      setErrorMsg(msg);
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 6000);
     }
+  };
+
+  const label = () => {
+    if (status === "uploading") {
+      const pct = progress.total > 0 ? Math.round((progress.uploaded / progress.total) * 100) : 0;
+      return `Saving to Drive… ${pct}% (${progress.uploaded}/${progress.total})`;
+    }
+    if (status === "done") return "✓ Saved to Google Drive!";
+    if (status === "error") return errorMsg || "Upload failed — try again";
+    return "Save to Google Drive";
   };
 
   return (
     <button
       onClick={handleSaveToDrive}
-      disabled={status === "downloading"}
-      className="group relative flex items-center gap-2 px-5 py-2.5 border border-border text-foreground hover:bg-muted transition-colors rounded-sm disabled:opacity-70"
-      title="Download all photos, then open Google Drive to upload them"
+      disabled={status === "uploading"}
+      className={[
+        "group relative flex items-center gap-2 px-5 py-2.5 border rounded-sm transition-colors disabled:opacity-70",
+        status === "done"
+          ? "border-green-500 text-green-700 bg-green-50"
+          : status === "error"
+          ? "border-destructive text-destructive bg-destructive/5"
+          : "border-border text-foreground hover:bg-muted",
+      ].join(" ")}
+      title="Sign in with Google and save all photos directly to your Drive"
     >
-      {/* Google Drive icon */}
-      <svg width="18" height="18" viewBox="0 0 87.3 78" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066DA"/>
-        <path d="M43.65 25L29.9 0c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.5c-.8 1.4-1.2 2.95-1.2 4.5h27.5z" fill="#00AC47"/>
-        <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.9 10.85z" fill="#EA4335"/>
-        <path d="M43.65 25L57.4 0H29.9z" fill="#00832D"/>
-        <path d="M59.8 53H27.5L13.75 76.8h49.9z" fill="#2684FC"/>
-        <path d="M73.4 26.5c-.8-1.4-1.95-2.5-3.3-3.3L57.4 0H29.9l13.75 25H87.3c0-1.55-.4-3.1-1.2-4.5z" fill="#FFBA00"/>
-      </svg>
-      {status === "downloading"
-        ? `Downloading… ${progress}%`
-        : status === "done"
-        ? "✓ Saved — check Downloads & Drive!"
-        : "Save to Google Drive"}
+      <DriveIcon />
+      <span className="text-sm font-medium">{label()}</span>
     </button>
   );
 }
