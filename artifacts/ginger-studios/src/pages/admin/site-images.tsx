@@ -122,14 +122,16 @@ export default function SiteImages() {
       return;
     }
     await createMutation.mutateAsync({
-      section: activeSection,
-      imageUrl: newEntry.imageUrl,
-      title: newEntry.title ?? "",
-      label: newEntry.label ?? "",
-      category: newEntry.category ?? (activeSection === "portfolio" ? "weddings" : "all"),
-      tall: newEntry.tall ?? false,
-      isActive: true,
-      sortOrder: images.length,
+      data: {
+        section: activeSection,
+        imageUrl: newEntry.imageUrl,
+        title: newEntry.title ?? "",
+        label: newEntry.label ?? "",
+        category: newEntry.category ?? (activeSection === "portfolio" ? "weddings" : "all"),
+        tall: newEntry.tall ?? false,
+        isActive: true,
+        sortOrder: images.length,
+      },
     });
     invalidate();
     setAddMode(false);
