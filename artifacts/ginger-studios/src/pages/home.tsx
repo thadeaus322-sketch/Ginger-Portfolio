@@ -2,27 +2,28 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { ArrowRight, Star } from "lucide-react";
+import { img } from "@/lib/assets";
 
 // ─── Hero Slider Images ───────────────────────────────────────────────────────
 const HERO_SLIDES = [
-  { src: "/images/wedding-bride.jpg",     label: "WEDDINGS",   title: "A Short Story of Love"      },
-  { src: "/images/portrait-studio-1.jpg", label: "PORTRAITS",  title: "Majestic in Her Own Way"    },
-  { src: "/images/event-1.jpg",           label: "EVENTS",     title: "The Archers Evening"        },
-  { src: "/images/food-3.jpg",            label: "FOOD",       title: "South Kitchen & Lounge"     },
-  { src: "/images/product-1.jpg",         label: "PRODUCTS",   title: "OkunRiin Studio"            },
-  { src: "/images/birthday-portrait-1.jpg", label: "BIRTHDAY", title: "Zarah's 25th"              },
-  { src: "/images/event-2.jpg",           label: "EVENTS",     title: "Christmas at The Archers"   },
-  { src: "/images/food-2.jpg",            label: "FOOD",       title: "Feast of the Season"        },
+  { src: img("images/wedding-bride.jpg"),       label: "WEDDINGS",   title: "A Short Story of Love"      },
+  { src: img("images/portrait-studio-1.jpg"),   label: "PORTRAITS",  title: "Majestic in Her Own Way"    },
+  { src: img("images/event-1.jpg"),             label: "EVENTS",     title: "The Archers Evening"        },
+  { src: img("images/food-3.jpg"),              label: "FOOD",       title: "South Kitchen & Lounge"     },
+  { src: img("images/product-1.jpg"),           label: "PRODUCTS",   title: "OkunRiin Studio"            },
+  { src: img("images/birthday-portrait-1.jpg"), label: "BIRTHDAY",   title: "Zarah's 25th"              },
+  { src: img("images/event-2.jpg"),             label: "EVENTS",     title: "Christmas at The Archers"   },
+  { src: img("images/food-2.jpg"),              label: "FOOD",       title: "Feast of the Season"        },
 ];
 
 // ─── Card Stack Images ────────────────────────────────────────────────────────
 const CARDS = [
-  { id: 1, src: "/images/wedding-bride.jpg",     cat: "WEDDINGS",  title: "A Short Story of Love"    },
-  { id: 2, src: "/images/portrait-studio-1.jpg", cat: "PORTRAITS", title: "Majestic in Her Own Way"  },
-  { id: 3, src: "/images/birthday-portrait-1.jpg", cat: "BIRTHDAY", title: "Zarah's 25th"           },
-  { id: 4, src: "/images/event-1.jpg",           cat: "EVENTS",    title: "The Archers Evening"      },
-  { id: 5, src: "/images/wedding-detail.jpg",    cat: "WEDDINGS",  title: "The Details"              },
-  { id: 6, src: "/images/birthday-portrait-2.jpg", cat: "PORTRAITS", title: "Jisola Studio Session" },
+  { id: 1, src: img("images/wedding-bride.jpg"),       cat: "WEDDINGS",  title: "A Short Story of Love"    },
+  { id: 2, src: img("images/portrait-studio-1.jpg"),   cat: "PORTRAITS", title: "Majestic in Her Own Way"  },
+  { id: 3, src: img("images/birthday-portrait-1.jpg"), cat: "BIRTHDAY",  title: "Zarah's 25th"             },
+  { id: 4, src: img("images/event-1.jpg"),             cat: "EVENTS",    title: "The Archers Evening"      },
+  { id: 5, src: img("images/wedding-detail.jpg"),      cat: "WEDDINGS",  title: "The Details"              },
+  { id: 6, src: img("images/birthday-portrait-2.jpg"), cat: "PORTRAITS", title: "Jisola Studio Session"    },
 ];
 
 // ─── Animated Counter ─────────────────────────────────────────────────────────

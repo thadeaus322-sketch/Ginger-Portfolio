@@ -4,6 +4,8 @@ import {
   useScroll, useTransform, useInView, useMotionValue, useSpring,
 } from "framer-motion";
 
+import { img } from "@/lib/assets";
+
 // ─── Brand ────────────────────────────────────────────────────────────────────
 const WA_LINK = "https://wa.me/2347067310008?text=Hi%20Ginger%20Studios!%20I%27d%20like%20to%20book%20a%20film.";
 const EMAIL   = "hi@gvs.com.ng";
@@ -13,7 +15,7 @@ const PHONE1  = "07067310008";
 const FILMS = [
   {
     id:    1,
-    src:   "/images/video-reel-1.mp4",
+    src:   img("images/video-reel-1.mp4"),
     title: "The Kafidiyas",
     sub:   "A short story of an unending love",
     cat:   "Couples Film",
@@ -23,7 +25,7 @@ const FILMS = [
   },
   {
     id:    2,
-    src:   "/images/video-reel-2.mp4",
+    src:   img("images/video-reel-2.mp4"),
     title: "SOEY",
     sub:   "A vision. A brand. A story.",
     cat:   "Brand Commercial",
@@ -33,7 +35,7 @@ const FILMS = [
   },
   {
     id:    3,
-    src:   "/images/video-reel-3.mp4",
+    src:   img("images/video-reel-3.mp4"),
     title: "GVS Reel 2026",
     sub:   "Moments worth keeping",
     cat:   "Studio Showreel",

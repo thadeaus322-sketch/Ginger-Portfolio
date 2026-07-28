@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useGetMe, useAdminLogout } from "@workspace/api-client-react";
 import { LayoutDashboard, Images, PlusCircle, LogOut } from "lucide-react";
-const logoIcon = "/images/logo-icon.png";
+import { img } from "@/lib/assets";
+const logoIcon = img("images/logo-icon.png");
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();

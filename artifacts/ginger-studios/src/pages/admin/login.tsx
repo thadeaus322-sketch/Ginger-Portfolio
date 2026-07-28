@@ -5,7 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAdminLogin, useGetMe } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
-const logoIcon = "/images/logo-icon.png";
+import { img } from "@/lib/assets";
+const logoIcon = img("images/logo-icon.png");
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),

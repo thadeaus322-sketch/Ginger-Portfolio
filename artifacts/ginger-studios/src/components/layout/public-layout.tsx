@@ -3,8 +3,9 @@ import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 
-const logoIcon = "/images/logo-icon.png";
-const logoB = "/images/logo-b.png";
+import { img } from "@/lib/assets";
+const logoIcon = img("images/logo-icon.png");
+const logoB    = img("images/logo-b.png");
 
 // ─── Brand constants ──────────────────────────────────────────────────────────
 const BRAND = {

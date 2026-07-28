@@ -1,3 +1,4 @@
+import { img } from "@/lib/assets";
 import { useState } from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
@@ -16,35 +17,35 @@ const CATEGORIES = [
 // ─── Portfolio data ───────────────────────────────────────────────────────────
 const PORTFOLIO = [
   // Weddings
-  { id:  1, src: "/images/wedding-bride.jpg",     category: "weddings", title: "A Short Story of Love",      tall: true  },
-  { id:  2, src: "/images/wedding-detail.jpg",    category: "weddings", title: "The Details",               tall: false },
+  { id:  1, src: img("images/wedding-bride.jpg"),     category: "weddings", title: "A Short Story of Love",      tall: true  },
+  { id:  2, src: img("images/wedding-detail.jpg"),    category: "weddings", title: "The Details",               tall: false },
 
   // Portraits
-  { id:  3, src: "/images/portrait-studio-1.jpg", category: "portraits",title: "Majestic in Her Own Way",    tall: true  },
-  { id:  4, src: "/images/birthday-portrait-2.jpg",category:"portraits",title: "Jisola Studio Session",     tall: false },
+  { id:  3, src: img("images/portrait-studio-1.jpg"), category: "portraits",title: "Majestic in Her Own Way",    tall: true  },
+  { id:  4, src: img("images/birthday-portrait-2.jpg"),category:"portraits",title: "Jisola Studio Session",     tall: false },
 
   // Events
-  { id:  5, src: "/images/event-1.jpg",           category: "events",   title: "The Archers Evening",       tall: true  },
-  { id:  6, src: "/images/event-2.jpg",           category: "events",   title: "Christmas at The Archers",  tall: false },
-  { id:  7, src: "/images/event-4.jpg",           category: "events",   title: "Arriving in Style",         tall: false },
-  { id:  8, src: "/images/event-5.jpg",           category: "events",   title: "The Art Hotel",             tall: false },
+  { id:  5, src: img("images/event-1.jpg"),           category: "events",   title: "The Archers Evening",       tall: true  },
+  { id:  6, src: img("images/event-2.jpg"),           category: "events",   title: "Christmas at The Archers",  tall: false },
+  { id:  7, src: img("images/event-4.jpg"),           category: "events",   title: "Arriving in Style",         tall: false },
+  { id:  8, src: img("images/event-5.jpg"),           category: "events",   title: "The Art Hotel",             tall: false },
 
   // Food
-  { id:  9, src: "/images/food-1.jpg",            category: "food",     title: "Fufu & Egusi",              tall: false },
-  { id: 10, src: "/images/food-2.jpg",            category: "food",     title: "Feast of the Season",       tall: true  },
-  { id: 11, src: "/images/food-3.jpg",            category: "food",     title: "Jollof & Suya",             tall: false },
-  { id: 12, src: "/images/food-4.jpg",            category: "food",     title: "The Full Plate",            tall: false },
-  { id: 13, src: "/images/food-5.jpg",            category: "food",     title: "Grilled Wings Board",       tall: false },
-  { id: 14, src: "/images/food-6.jpg",            category: "food",     title: "Ribs & Fries",              tall: true  },
+  { id:  9, src: img("images/food-1.jpg"),            category: "food",     title: "Fufu & Egusi",              tall: false },
+  { id: 10, src: img("images/food-2.jpg"),            category: "food",     title: "Feast of the Season",       tall: true  },
+  { id: 11, src: img("images/food-3.jpg"),            category: "food",     title: "Jollof & Suya",             tall: false },
+  { id: 12, src: img("images/food-4.jpg"),            category: "food",     title: "The Full Plate",            tall: false },
+  { id: 13, src: img("images/food-5.jpg"),            category: "food",     title: "Grilled Wings Board",       tall: false },
+  { id: 14, src: img("images/food-6.jpg"),            category: "food",     title: "Ribs & Fries",              tall: true  },
 
   // Products
-  { id: 15, src: "/images/product-1.jpg",         category: "products", title: "OkunRiin Men's Skincare",   tall: true  },
-  { id: 16, src: "/images/product-2.jpg",         category: "products", title: "Hair Care Series",          tall: false },
-  { id: 17, src: "/images/product-3.jpg",         category: "products", title: "Hair Softener — Single",   tall: false },
+  { id: 15, src: img("images/product-1.jpg"),         category: "products", title: "OkunRiin Men's Skincare",   tall: true  },
+  { id: 16, src: img("images/product-2.jpg"),         category: "products", title: "Hair Care Series",          tall: false },
+  { id: 17, src: img("images/product-3.jpg"),         category: "products", title: "Hair Softener — Single",   tall: false },
 
   // Birthday
-  { id: 18, src: "/images/birthday-portrait-1.jpg",category:"birthday", title: "Zarah's 25th",             tall: true  },
-  { id: 19, src: "/images/birthday-portrait-2.jpg",category:"birthday", title: "Jisola xo",                tall: false },
+  { id: 18, src: img("images/birthday-portrait-1.jpg"),category:"birthday", title: "Zarah's 25th",             tall: true  },
+  { id: 19, src: img("images/birthday-portrait-2.jpg"),category:"birthday", title: "Jisola xo",                tall: false },
 ];
 
 type Item = typeof PORTFOLIO[number];

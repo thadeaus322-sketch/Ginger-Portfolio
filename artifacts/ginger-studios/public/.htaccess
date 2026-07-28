@@ -1,9 +1,16 @@
-Options -Indexes
+# ── Ginger Studios — Apache / cPanel configuration ───────────────────────────
+# Works on Apache 2.2+ with mod_rewrite enabled (all standard cPanel hosts).
 
-# ── Compression ──────────────────────────────────────────────────────────────
-<IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json
-</IfModule>
+Options -Indexes
+DirectoryIndex index.html
+
+# ── MIME types ────────────────────────────────────────────────────────────────
+AddType image/svg+xml         .svg
+AddType image/webp             .webp
+AddType video/mp4              .mp4
+AddType font/woff2             .woff2
+AddType application/javascript .js
+AddType text/css               .css
 
 # ── Caching ───────────────────────────────────────────────────────────────────
 <IfModule mod_expires.c>
@@ -11,22 +18,26 @@ Options -Indexes
   <FilesMatch "\.(js|css)$">
     ExpiresDefault "access plus 1 year"
   </FilesMatch>
-  <FilesMatch "\.(jpg|jpeg|png|gif|svg|webp|ico|mp4|woff2|woff|ttf)$">
+  <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|ico|mp4|woff2)$">
     ExpiresDefault "access plus 1 month"
   </FilesMatch>
 </IfModule>
 
 # ── SPA routing ───────────────────────────────────────────────────────────────
-# CRITICAL: check real files/dirs first, then fall back to index.html.
-# Without -f / -d guards, every /images/*.jpg request gets served index.html
-# instead of the actual image file — making all images invisible.
+# React Router handles all navigation client-side. We only send requests to
+# index.html when no real file or directory matches — this means images, JS,
+# CSS, fonts, and videos are always served directly without rewriting.
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
 
-  RewriteCond %{REQUEST_FILENAME} -f [OR]
-  RewriteCond %{REQUEST_FILENAME} -d
-  RewriteRule ^ - [L]
+  # Never rewrite index.html itself
+  RewriteRule ^index\.html$ - [L]
 
-  RewriteRule ^ index.html [L]
+  # If the request is for a real file (image, JS, CSS, video…) — serve it as-is
+  RewriteCond %{REQUEST_FILENAME} !-f
+  # If the request is for a real directory — serve it as-is
+  RewriteCond %{REQUEST_FILENAME} !-d
+  # Anything else (client-side routes) → index.html
+  RewriteRule . /index.html [L]
 </IfModule>
