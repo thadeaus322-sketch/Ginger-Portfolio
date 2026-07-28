@@ -168,10 +168,10 @@ function CardStack() {
   const orderedCards = Array.from({ length: total }, (_, i) => CARDS[(frontIdx + i) % total]);
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center w-full">
       <div
-        className="relative cursor-pointer select-none"
-        style={{ width: 340, height: 480 }}
+        className="relative cursor-pointer select-none w-full max-w-[340px]"
+        style={{ aspectRatio: "340 / 480" }}
         onClick={next}
       >
         {orderedCards.slice(0, visible).map((card, i) => {
@@ -332,8 +332,8 @@ export default function Home() {
       </div>
 
       {/* ══ CARD STACK GALLERY ════════════════════════════════════════════════ */}
-      <section className="py-32 md:py-48 bg-[#211C17] overflow-hidden">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
+      <section className="py-20 md:py-32 lg:py-48 bg-[#211C17] overflow-hidden">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
           <motion.div
             initial={{ opacity: 0, x: -40 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -382,9 +382,9 @@ export default function Home() {
       </section>
 
       {/* ══ SERVICES ══════════════════════════════════════════════════════════ */}
-      <section className="py-32 md:py-40 bg-[#211C17] border-t border-[#FBF6EE]/5">
+      <section className="py-20 md:py-32 lg:py-40 bg-[#211C17] border-t border-[#FBF6EE]/5">
         <div className="max-w-[1400px] mx-auto">
-          <div className="flex overflow-x-auto md:grid md:grid-cols-4 gap-6 px-6 lg:px-12 pb-12 md:pb-0 snap-x">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-6 lg:px-12">
             {SERVICES.map((s, i) => (
               <motion.div
                 key={s.id}
@@ -392,7 +392,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ delay: i * 0.1, duration: 0.7 }}
-                className="min-w-[300px] md:min-w-0 flex-shrink-0 snap-start relative bg-[#26211C] p-10 md:p-12 rounded-2xl group hover:bg-[#2A241F] transition-colors duration-500 overflow-hidden border border-white/5"
+                className="relative bg-[#26211C] p-8 sm:p-10 md:p-12 rounded-2xl group hover:bg-[#2A241F] transition-colors duration-500 overflow-hidden border border-white/5"
               >
                 <div className="absolute top-6 right-6 text-[120px] leading-[0.8] font-serif text-[#F0961B] opacity-[0.08] pointer-events-none select-none transition-transform duration-700 group-hover:scale-110 group-hover:-translate-y-2">
                   {s.id}

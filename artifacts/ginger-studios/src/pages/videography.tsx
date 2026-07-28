@@ -284,7 +284,7 @@ function CinemaHero({ onBook }: { onBook: () => void }) {
         {/* Stats row */}
         <motion.div
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 0.8 }}
-          className="flex items-center gap-10 md:gap-16 mt-16 pt-10 border-t border-[#211C17]/12">
+          className="flex flex-wrap items-center justify-center gap-6 md:gap-16 mt-10 md:mt-16 pt-8 md:pt-10 border-t border-[#211C17]/12">
           {[["100+", "Films Made"], ["240+", "Happy Clients"], ["7 yrs", "In Business"]].map(([n, l]) => (
             <div key={l} className="text-center">
               <p className="font-serif text-[26px] md:text-3xl text-[#211C17] leading-none" style={{ textShadow: "0 1px 12px rgba(251,246,238,0.9)" }}>{n}</p>
@@ -342,7 +342,7 @@ function VideoReelStrip() {
       </div>
 
       {/* Scrolling video strip */}
-      <div className="relative overflow-hidden" style={{ height: 220 }}>
+      <div className="relative overflow-hidden" style={{ height: "clamp(140px, 22vw, 220px)" }}>
         {/* Left/right fade */}
         <div className="absolute left-0 top-0 bottom-0 w-24 z-10 pointer-events-none" style={{ background: "linear-gradient(to right, #0f0c09, transparent)" }} />
         <div className="absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none" style={{ background: "linear-gradient(to left, #0f0c09, transparent)" }} />
@@ -476,7 +476,7 @@ function PortfolioSection({ onPlay, onBook }: { onPlay: (src: string) => void; o
       </div>
 
       {/* Slider */}
-      <div className="relative overflow-hidden" style={{ height: "min(75vh, 660px)" }}>
+      <div className="relative overflow-hidden" style={{ height: "min(75vh, 660px)", minHeight: 280 }}>
         <AnimatePresence custom={direction} mode="wait">
           <motion.div
             key={active}
@@ -527,12 +527,12 @@ function PortfolioSection({ onPlay, onBook }: { onPlay: (src: string) => void; o
                   {/* Film info */}
                   <motion.div key={`info-${active}`}
                     initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.55 }}
-                    className="absolute bottom-5 left-6 right-6 z-20 flex items-end justify-between">
-                    <div>
-                      <p className="font-serif text-white text-3xl md:text-4xl leading-tight">{film.title}</p>
-                      <p className="font-serif italic text-white/50 text-base mt-1">{film.sub}</p>
+                    className="absolute bottom-5 left-6 right-6 z-20 flex items-end justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-serif text-white text-xl sm:text-3xl md:text-4xl leading-tight truncate">{film.title}</p>
+                      <p className="font-serif italic text-white/50 text-sm md:text-base mt-1 hidden sm:block">{film.sub}</p>
                     </div>
-                    <div className="flex gap-3 items-center flex-shrink-0 ml-4">
+                    <div className="flex gap-2 md:gap-3 items-center flex-shrink-0">
                       <motion.button onClick={() => onBook()}
                         className="hidden md:flex items-center gap-2 bg-white/10 hover:bg-[#F0961B] backdrop-blur-sm border border-white/20 hover:border-[#F0961B] text-white text-xs font-mono tracking-[0.18em] uppercase px-4 py-2.5 rounded-sm transition-all duration-300"
                         whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.96 }}>
