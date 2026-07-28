@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useGetMe, useAdminLogout } from "@workspace/api-client-react";
-import { LayoutDashboard, Images, PlusCircle, LogOut } from "lucide-react";
+import { LayoutDashboard, Images, PlusCircle, LogOut, LayoutTemplate } from "lucide-react";
 import { img } from "@/lib/assets";
 const logoIcon = img("images/logo-icon.png");
 
@@ -29,8 +29,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-    { label: "Galleries", href: "/admin/galleries", icon: Images }, // This could just be dashboard too, but let's point to dashboard
+    { label: "Galleries", href: "/admin/galleries", icon: Images },
     { label: "New Gallery", href: "/admin/galleries/new", icon: PlusCircle },
+    { label: "Site Images", href: "/admin/site-images", icon: LayoutTemplate },
   ];
 
   if (isLoading) {

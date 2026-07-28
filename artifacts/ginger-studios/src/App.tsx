@@ -11,6 +11,7 @@ import AdminLogin from "./pages/admin/login";
 import AdminDashboard from "./pages/admin/dashboard";
 import NewGallery from "./pages/admin/new-gallery";
 import GalleryDetail from "./pages/admin/gallery-detail";
+import SiteImages from "./pages/admin/site-images";
 import { useGetMe } from "@workspace/api-client-react";
 
 // Admin Protected Route Wrapper — never call setLocation/Redirect during render
@@ -61,6 +62,7 @@ function AdminRoutes() {
             <Route path="/admin/galleries/new" component={() => <ProtectedAdminRoute component={NewGallery} />} />
             <Route path="/admin/galleries/:id" component={() => <ProtectedAdminRoute component={GalleryDetail} />} />
             <Route path="/admin/galleries" component={() => <ProtectedAdminRoute component={AdminDashboard} />} />
+            <Route path="/admin/site-images" component={() => <ProtectedAdminRoute component={SiteImages} />} />
             <Route component={NotFound} />
           </Switch>
         </AdminLayout>

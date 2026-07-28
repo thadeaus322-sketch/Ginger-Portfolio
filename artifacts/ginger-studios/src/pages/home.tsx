@@ -3,9 +3,10 @@ import { Link } from "wouter";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { ArrowRight, Star } from "lucide-react";
 import { img } from "@/lib/assets";
+import { useListSiteImages } from "@workspace/api-client-react";
 
-// ─── Hero Slider Images ───────────────────────────────────────────────────────
-const HERO_SLIDES = [
+// ─── Fallback static images (shown while API loads or if empty) ────────────────
+const FALLBACK_HERO = [
   { src: img("images/wedding-bride.jpg"),       label: "WEDDINGS",   title: "A Short Story of Love"      },
   { src: img("images/portrait-studio-1.jpg"),   label: "PORTRAITS",  title: "Majestic in Her Own Way"    },
   { src: img("images/event-1.jpg"),             label: "EVENTS",     title: "The Archers Evening"        },
@@ -16,8 +17,7 @@ const HERO_SLIDES = [
   { src: img("images/food-2.jpg"),              label: "FOOD",       title: "Feast of the Season"        },
 ];
 
-// ─── Card Stack Images ────────────────────────────────────────────────────────
-const CARDS = [
+const FALLBACK_CARDS = [
   { id: 1, src: img("images/wedding-bride.jpg"),       cat: "WEDDINGS",  title: "A Short Story of Love"    },
   { id: 2, src: img("images/portrait-studio-1.jpg"),   cat: "PORTRAITS", title: "Majestic in Her Own Way"  },
   { id: 3, src: img("images/birthday-portrait-1.jpg"), cat: "BIRTHDAY",  title: "Zarah's 25th"             },
@@ -60,24 +60,26 @@ function Counter({ end, suffix = "", label, decimals = 0 }: { end: number; suffi
 }
 
 // ─── Hero Slider ──────────────────────────────────────────────────────────────
-function HeroSlider() {
+function HeroSlider({ slides }: { slides: { src: string; label: string; title: string }[] }) {
   const [idx, setIdx] = useState(0);
   const [direction, setDirection] = useState(1);
 
   useEffect(() => {
+    if (slides.length === 0) return;
     const t = setInterval(() => {
       setDirection(1);
-      setIdx(i => (i + 1) % HERO_SLIDES.length);
+      setIdx(i => (i + 1) % slides.length);
     }, 4200);
     return () => clearInterval(t);
-  }, []);
+  }, [slides.length]);
 
   const goTo = (next: number) => {
     setDirection(next > idx ? 1 : -1);
     setIdx(next);
   };
 
-  const slide = HERO_SLIDES[idx];
+  const slide = slides[idx] ?? slides[0];
+  if (!slide) return null;
 
   const variants = {
     enter: (dir: number) => ({ x: dir > 0 ? "100%" : "-100%", opacity: 0 }),
@@ -98,15 +100,8 @@ function HeroSlider() {
           transition={{ duration: 0.85, ease: [0.76, 0, 0.24, 1] }}
           className="absolute inset-0"
         >
-          <img
-            src={slide.src}
-            alt={slide.title}
-            className="w-full h-full object-cover"
-          />
-          {/* Warm overlay */}
+          <img src={slide.src} alt={slide.title} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#211C17]/70 via-transparent to-[#211C17]/10" />
-
-          {/* Slide caption */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -121,12 +116,10 @@ function HeroSlider() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Large editorial number */}
       <div className="absolute top-6 right-8 text-[120px] leading-none font-serif text-white/10 pointer-events-none select-none">
         {String(idx + 1).padStart(2, "0")}
       </div>
 
-      {/* Ticker */}
       <div className="absolute bottom-0 left-0 right-0 overflow-hidden whitespace-nowrap text-[#F0961B] text-xs tracking-[0.2em] uppercase font-bold flex bg-[#211C17]/50 backdrop-blur-sm py-3">
         <motion.div
           animate={{ x: ["0%", "-50%"] }}
@@ -138,9 +131,8 @@ function HeroSlider() {
         </motion.div>
       </div>
 
-      {/* Slide dots */}
       <div className="absolute bottom-10 right-6 flex gap-1.5 items-center">
-        {HERO_SLIDES.map((_, i) => (
+        {slides.map((_, i) => (
           <button
             key={i}
             onClick={() => goTo(i)}
@@ -159,14 +151,15 @@ function HeroSlider() {
 }
 
 // ─── Card Stack ───────────────────────────────────────────────────────────────
-function CardStack() {
+function CardStack({ cards }: { cards: { id: number; src: string; cat: string; title: string }[] }) {
   const [frontIdx, setFrontIdx] = useState(0);
-  const total = CARDS.length;
+  const total = cards.length;
   const visible = 4;
 
   const next = () => setFrontIdx(i => (i + 1) % total);
+  const orderedCards = Array.from({ length: total }, (_, i) => cards[(frontIdx + i) % total]);
 
-  const orderedCards = Array.from({ length: total }, (_, i) => CARDS[(frontIdx + i) % total]);
+  if (total === 0) return null;
 
   return (
     <div className="flex flex-col items-center w-full">
@@ -211,9 +204,8 @@ function CardStack() {
         })}
       </div>
 
-      {/* Indicators */}
       <div className="mt-14 flex gap-2">
-        {CARDS.map((_, i) => (
+        {cards.map((_, i) => (
           <motion.div
             key={i}
             animate={{
@@ -239,7 +231,6 @@ const SERVICES = [
   { id: "04", title: "Brand Films",  desc: "Cinematic motion pictures that give your business a new level of credibility and class." },
 ];
 
-// ─── Testimonials ─────────────────────────────────────────────────────────────
 const TESTIMONIALS = [
   { quote: "Every single picture felt like a movie. Ginger Studios didn't just take photos — they captured the actual feeling of our wedding day.", name: "Aisha & Tobi", rating: 5 },
   { quote: "The warmth in their lighting and attention to detail is unmatched. They made me feel like a star at my own birthday session.", name: "Zarah", rating: 5 },
@@ -250,18 +241,26 @@ const TESTIMONIALS = [
 export default function Home() {
   const quoteWords = "We believe every moment has a rhythm. Our job is to catch it.".split(" ");
 
+  const { data: siteImages = [] } = useListSiteImages();
+
+  const heroSlides = siteImages.filter(i => i.section === "hero_slide" && i.isActive).length > 0
+    ? siteImages.filter(i => i.section === "hero_slide" && i.isActive).map(i => ({ src: i.imageUrl, label: i.label || "MOMENTS", title: i.title || "" }))
+    : FALLBACK_HERO;
+
+  const cardItems = siteImages.filter(i => i.section === "card_stack" && i.isActive).length > 0
+    ? siteImages.filter(i => i.section === "card_stack" && i.isActive).map(i => ({ id: i.id, src: i.imageUrl, cat: i.label || "MOMENTS", title: i.title || "" }))
+    : FALLBACK_CARDS;
+
   return (
     <div className="w-full flex flex-col bg-[#FBF6EE]">
 
       {/* ══ HERO ══════════════════════════════════════════════════════════════ */}
       <section className="relative min-h-[calc(100vh-96px)] flex flex-col lg:flex-row overflow-hidden">
-        {/* Dot grid background */}
         <div
           className="absolute inset-0 pointer-events-none opacity-10 z-0"
           style={{ backgroundImage: "radial-gradient(#211C17 1.5px, transparent 1.5px)", backgroundSize: "32px 32px" }}
         />
 
-        {/* Left — Hero Slider */}
         <div className="w-full lg:w-[60%] relative h-[55vh] lg:h-auto z-10 p-4 lg:p-8 lg:pr-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.97 }}
@@ -269,11 +268,10 @@ export default function Home() {
             transition={{ duration: 1.2, ease: [0.76, 0, 0.24, 1] }}
             className="relative w-full h-full"
           >
-            <HeroSlider />
+            <HeroSlider slides={heroSlides} />
           </motion.div>
         </div>
 
-        {/* Right — Typography & Stats */}
         <div className="w-full lg:w-[40%] flex flex-col justify-center px-8 lg:px-16 py-12 lg:py-0 z-10">
           <motion.h1
             initial={{ opacity: 0 }}
@@ -342,7 +340,7 @@ export default function Home() {
             transition={{ duration: 0.9, ease: "easeOut" }}
             className="flex justify-center lg:justify-start order-2 lg:order-1"
           >
-            <CardStack />
+            <CardStack cards={cardItems} />
           </motion.div>
 
           <div className="flex flex-col order-1 lg:order-2">

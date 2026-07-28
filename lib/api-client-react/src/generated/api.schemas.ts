@@ -131,6 +131,35 @@ export interface RequestUploadUrlBody {
   contentType: string;
 }
 
+export interface SiteImage {
+  id: number;
+  section: string;
+  category: string;
+  title: string;
+  label: string;
+  imageUrl: string;
+  sortOrder: number;
+  tall: boolean;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface SiteImageInput {
+  section: string;
+  category?: string;
+  title?: string;
+  label?: string;
+  imageUrl: string;
+  sortOrder?: number;
+  tall?: boolean;
+  isActive?: boolean;
+}
+
+export interface SiteImagesReorderInput {
+  section: string;
+  ids: number[];
+}
+
 export type RequestUploadUrlResponseMetadata = {
   name: string;
   size: number;
@@ -142,4 +171,8 @@ export interface RequestUploadUrlResponse {
   objectPath: string;
   metadata: RequestUploadUrlResponseMetadata;
 }
+
+export type ListSiteImagesParams = {
+section?: string;
+};
 

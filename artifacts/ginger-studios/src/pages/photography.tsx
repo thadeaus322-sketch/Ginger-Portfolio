@@ -2,6 +2,7 @@ import { img } from "@/lib/assets";
 import { useState } from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { useListSiteImages } from "@workspace/api-client-react";
 
 // ─── Category config ──────────────────────────────────────────────────────────
 const CATEGORIES = [
@@ -14,41 +15,30 @@ const CATEGORIES = [
   { id: "birthday", label: "Birthday", accent: "#f472b6" },
 ];
 
-// ─── Portfolio data ───────────────────────────────────────────────────────────
-const PORTFOLIO = [
-  // Weddings
+// ─── Static fallback portfolio data ───────────────────────────────────────────
+const FALLBACK_PORTFOLIO = [
   { id:  1, src: img("images/wedding-bride.jpg"),     category: "weddings", title: "A Short Story of Love",      tall: true  },
   { id:  2, src: img("images/wedding-detail.jpg"),    category: "weddings", title: "The Details",               tall: false },
-
-  // Portraits
   { id:  3, src: img("images/portrait-studio-1.jpg"), category: "portraits",title: "Majestic in Her Own Way",    tall: true  },
   { id:  4, src: img("images/birthday-portrait-2.jpg"),category:"portraits",title: "Jisola Studio Session",     tall: false },
-
-  // Events
   { id:  5, src: img("images/event-1.jpg"),           category: "events",   title: "The Archers Evening",       tall: true  },
   { id:  6, src: img("images/event-2.jpg"),           category: "events",   title: "Christmas at The Archers",  tall: false },
   { id:  7, src: img("images/event-4.jpg"),           category: "events",   title: "Arriving in Style",         tall: false },
   { id:  8, src: img("images/event-5.jpg"),           category: "events",   title: "The Art Hotel",             tall: false },
-
-  // Food
   { id:  9, src: img("images/food-1.jpg"),            category: "food",     title: "Fufu & Egusi",              tall: false },
   { id: 10, src: img("images/food-2.jpg"),            category: "food",     title: "Feast of the Season",       tall: true  },
   { id: 11, src: img("images/food-3.jpg"),            category: "food",     title: "Jollof & Suya",             tall: false },
   { id: 12, src: img("images/food-4.jpg"),            category: "food",     title: "The Full Plate",            tall: false },
   { id: 13, src: img("images/food-5.jpg"),            category: "food",     title: "Grilled Wings Board",       tall: false },
   { id: 14, src: img("images/food-6.jpg"),            category: "food",     title: "Ribs & Fries",              tall: true  },
-
-  // Products
   { id: 15, src: img("images/product-1.jpg"),         category: "products", title: "OkunRiin Men's Skincare",   tall: true  },
   { id: 16, src: img("images/product-2.jpg"),         category: "products", title: "Hair Care Series",          tall: false },
   { id: 17, src: img("images/product-3.jpg"),         category: "products", title: "Hair Softener — Single",   tall: false },
-
-  // Birthday
   { id: 18, src: img("images/birthday-portrait-1.jpg"),category:"birthday", title: "Zarah's 25th",             tall: true  },
   { id: 19, src: img("images/birthday-portrait-2.jpg"),category:"birthday", title: "Jisola xo",                tall: false },
 ];
 
-type Item = typeof PORTFOLIO[number];
+type Item = { id: number; src: string; category: string; title: string; tall: boolean };
 
 function getCatMeta(id: string) {
   return CATEGORIES.find(c => c.id === id) ?? CATEGORIES[0];
@@ -75,8 +65,6 @@ function GalleryCard({ item, onClick }: { item: Item; onClick: () => void }) {
         style={{ display: "block", aspectRatio: item.tall ? "3/4" : "4/3" }}
         loading="lazy"
       />
-
-      {/* Hover overlay */}
       <div
         className="absolute inset-0 flex flex-col justify-end p-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
         style={{ background: "linear-gradient(to top, rgba(33,28,23,0.92) 0%, rgba(33,28,23,0.2) 55%, transparent 100%)" }}
@@ -86,8 +74,6 @@ function GalleryCard({ item, onClick }: { item: Item; onClick: () => void }) {
         </span>
         <h3 className="font-serif text-base text-white leading-tight">{item.title}</h3>
       </div>
-
-      {/* Category dot */}
       <div className="absolute top-3 left-3 w-2 h-2 rounded-full" style={{ background: cat.accent }} />
     </motion.div>
   );
@@ -107,7 +93,6 @@ function CategoryCardStack({ items }: { items: Item[] }) {
 
   const next = () => setFront(i => (i + 1) % total);
   const prev = () => setFront(i => (i - 1 + total) % total);
-
   const orderedItems = Array.from({ length: Math.min(total, 4) }, (_, i) => items[(front + i) % total]);
 
   return (
@@ -162,12 +147,8 @@ function CategoryCardStack({ items }: { items: Item[] }) {
         })}
       </div>
 
-      {/* Navigation */}
       <div className="flex items-center gap-6 mt-16">
-        <button
-          onClick={prev}
-          className="w-12 h-12 rounded-full border border-[#211C17]/20 flex items-center justify-center hover:bg-[#F0961B] hover:border-[#F0961B] hover:text-white transition-all"
-        >
+        <button onClick={prev} className="w-12 h-12 rounded-full border border-[#211C17]/20 flex items-center justify-center hover:bg-[#F0961B] hover:border-[#F0961B] hover:text-white transition-all">
           <ChevronLeft size={20} />
         </button>
         <div className="flex gap-2">
@@ -180,10 +161,7 @@ function CategoryCardStack({ items }: { items: Item[] }) {
             />
           ))}
         </div>
-        <button
-          onClick={next}
-          className="w-12 h-12 rounded-full border border-[#211C17]/20 flex items-center justify-center hover:bg-[#F0961B] hover:border-[#F0961B] hover:text-white transition-all"
-        >
+        <button onClick={next} className="w-12 h-12 rounded-full border border-[#211C17]/20 flex items-center justify-center hover:bg-[#F0961B] hover:border-[#F0961B] hover:text-white transition-all">
           <ChevronRight size={20} />
         </button>
       </div>
@@ -195,6 +173,20 @@ function CategoryCardStack({ items }: { items: Item[] }) {
 export default function Photography() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+
+  const { data: siteImages = [] } = useListSiteImages();
+
+  // Use DB portfolio items if any exist, otherwise fall back to static
+  const portfolioImages = siteImages.filter(i => i.section === "portfolio" && i.isActive);
+  const PORTFOLIO: Item[] = portfolioImages.length > 0
+    ? portfolioImages.map(i => ({
+        id: i.id,
+        src: i.imageUrl,
+        category: i.category,
+        title: i.title,
+        tall: i.tall,
+      }))
+    : FALLBACK_PORTFOLIO;
 
   const filtered = activeCategory === "all"
     ? PORTFOLIO
@@ -230,7 +222,6 @@ export default function Photography() {
               Portfolio
             </span>
             <h1 className="font-serif text-7xl md:text-8xl text-[#211C17] mb-3 leading-none">Photography</h1>
-            {/* Animated underline */}
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: "40%" }}
@@ -284,7 +275,7 @@ export default function Photography() {
           </LayoutGroup>
         </motion.div>
 
-        {/* ── Gallery: Card Stack for specific categories, Masonry for All ── */}
+        {/* ── Gallery ── */}
         {activeCategory === "all" ? (
           <motion.div layout className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-5">
             <AnimatePresence mode="popLayout">

@@ -5,6 +5,7 @@ import galleriesRouter from "./galleries.js";
 import publicGalleryRouter from "./publicGallery.js";
 import uploadRouter from "./upload.js";
 import storageRouter from "./storage.js";
+import siteImagesRouter from "./siteImages.js";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(galleriesRouter);
 router.use(publicGalleryRouter);
 router.use(uploadRouter);
 router.use(storageRouter);
+router.use(siteImagesRouter);
 
 export default router;

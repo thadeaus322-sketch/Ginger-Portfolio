@@ -251,6 +251,113 @@ export const RequestUploadUrlResponse = zod.object({
 
 
 /**
+ * @summary List site images (public — used by homepage and photography page)
+ */
+export const ListSiteImagesQueryParams = zod.object({
+  "section": zod.coerce.string().optional()
+})
+
+export const ListSiteImagesResponseItem = zod.object({
+  "id": zod.number(),
+  "section": zod.string(),
+  "category": zod.string(),
+  "title": zod.string(),
+  "label": zod.string(),
+  "imageUrl": zod.string(),
+  "sortOrder": zod.number(),
+  "tall": zod.boolean(),
+  "isActive": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+export const ListSiteImagesResponse = zod.array(ListSiteImagesResponseItem)
+
+
+/**
+ * @summary Create a site image (admin only)
+ */
+export const CreateSiteImageBody = zod.object({
+  "section": zod.string(),
+  "category": zod.string().optional(),
+  "title": zod.string().optional(),
+  "label": zod.string().optional(),
+  "imageUrl": zod.string(),
+  "sortOrder": zod.number().optional(),
+  "tall": zod.boolean().optional(),
+  "isActive": zod.boolean().optional()
+})
+
+export const CreateSiteImageResponse = zod.object({
+  "id": zod.number(),
+  "section": zod.string(),
+  "category": zod.string(),
+  "title": zod.string(),
+  "label": zod.string(),
+  "imageUrl": zod.string(),
+  "sortOrder": zod.number(),
+  "tall": zod.boolean(),
+  "isActive": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Reorder site images by section (admin only)
+ */
+export const ReorderSiteImagesBody = zod.object({
+  "section": zod.string(),
+  "ids": zod.array(zod.number())
+})
+
+export const ReorderSiteImagesResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary Update a site image (admin only)
+ */
+export const UpdateSiteImageParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateSiteImageBody = zod.object({
+  "section": zod.string(),
+  "category": zod.string().optional(),
+  "title": zod.string().optional(),
+  "label": zod.string().optional(),
+  "imageUrl": zod.string(),
+  "sortOrder": zod.number().optional(),
+  "tall": zod.boolean().optional(),
+  "isActive": zod.boolean().optional()
+})
+
+export const UpdateSiteImageResponse = zod.object({
+  "id": zod.number(),
+  "section": zod.string(),
+  "category": zod.string(),
+  "title": zod.string(),
+  "label": zod.string(),
+  "imageUrl": zod.string(),
+  "sortOrder": zod.number(),
+  "tall": zod.boolean(),
+  "isActive": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete a site image (admin only)
+ */
+export const DeleteSiteImageParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteSiteImageResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
  * @summary Get public gallery by access token (client link)
  */
 export const GetPublicGalleryParams = zod.object({

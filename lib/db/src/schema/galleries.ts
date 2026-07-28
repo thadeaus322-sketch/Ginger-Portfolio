@@ -104,6 +104,31 @@ export const galleriesTable = pgTable(
   ]
 );
 
+// ─── Site Images ──────────────────────────────────────────────────────────────
+// Stores manageable images for public-facing pages (homepage hero, photography portfolio).
+// section: "hero_slide" | "card_stack" | "portfolio"
+// category: for portfolio items — "weddings" | "portraits" | "events" | "food" | "products" | "birthday"
+//           for hero/card_stack — ignored / "all"
+export const siteImagesTable = pgTable(
+  "site_images",
+  {
+    id:        serial("id").primaryKey(),
+    section:   text("section").notNull(),          // "hero_slide" | "card_stack" | "portfolio"
+    category:  text("category").notNull().default("all"), // portfolio category or "all"
+    title:     text("title").notNull().default(""),
+    label:     text("label").notNull().default(""), // hero/card label (e.g. "WEDDINGS")
+    imageUrl:  text("image_url").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    tall:      boolean("tall").notNull().default(false), // portfolio masonry: tall=3/4, wide=4/3
+    isActive:  boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("site_images_section_idx").on(t.section),
+    index("site_images_section_sort_idx").on(t.section, t.sortOrder),
+  ]
+);
+
 // ─── Zod / insert schema ──────────────────────────────────────────────────────
 export const insertGallerySchema = createInsertSchema(galleriesTable).omit({
   id:        true,
@@ -112,6 +137,13 @@ export const insertGallerySchema = createInsertSchema(galleriesTable).omit({
   createdAt: true,
 });
 
-export type InsertGallery = z.infer<typeof insertGallerySchema>;
-export type GalleryRow    = typeof galleriesTable.$inferSelect;
-export type AdminUser     = typeof adminUsersTable.$inferSelect;
+export const insertSiteImageSchema = createInsertSchema(siteImagesTable).omit({
+  id:        true,
+  createdAt: true,
+});
+
+export type InsertGallery    = z.infer<typeof insertGallerySchema>;
+export type InsertSiteImage  = z.infer<typeof insertSiteImageSchema>;
+export type GalleryRow       = typeof galleriesTable.$inferSelect;
+export type SiteImageRow     = typeof siteImagesTable.$inferSelect;
+export type AdminUser        = typeof adminUsersTable.$inferSelect;

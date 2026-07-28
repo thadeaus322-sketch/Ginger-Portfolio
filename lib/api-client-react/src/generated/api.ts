@@ -27,10 +27,14 @@ import type {
   GalleryStats,
   GalleryUpdate,
   HealthStatus,
+  ListSiteImagesParams,
   LoginInput,
   PublicGallery,
   RequestUploadUrlBody,
   RequestUploadUrlResponse,
+  SiteImage,
+  SiteImageInput,
+  SiteImagesReorderInput,
   SuccessResponse,
   UploadRegistration,
   UploadResult
@@ -1015,6 +1019,375 @@ export const useRequestUploadUrl = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getRequestUploadUrlMutationOptions(options));
+    }
+
+export const getListSiteImagesUrl = (params?: ListSiteImagesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/site-images?${stringifiedParams}` : `/api/site-images`
+}
+
+/**
+ * @summary List site images (public — used by homepage and photography page)
+ */
+export const listSiteImages = async (params?: ListSiteImagesParams, options?: RequestInit): Promise<SiteImage[]> => {
+
+  return customFetch<SiteImage[]>(getListSiteImagesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListSiteImagesQueryKey = (params?: ListSiteImagesParams,) => {
+    return [
+    `/api/site-images`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListSiteImagesQueryOptions = <TData = Awaited<ReturnType<typeof listSiteImages>>, TError = ErrorType<unknown>>(params?: ListSiteImagesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSiteImages>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSiteImagesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSiteImages>>> = ({ signal }) => listSiteImages(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSiteImages>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListSiteImagesQueryResult = NonNullable<Awaited<ReturnType<typeof listSiteImages>>>
+export type ListSiteImagesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List site images (public — used by homepage and photography page)
+ */
+
+export function useListSiteImages<TData = Awaited<ReturnType<typeof listSiteImages>>, TError = ErrorType<unknown>>(
+ params?: ListSiteImagesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSiteImages>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListSiteImagesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateSiteImageUrl = () => {
+
+
+
+
+  return `/api/site-images`
+}
+
+/**
+ * @summary Create a site image (admin only)
+ */
+export const createSiteImage = async (siteImageInput: SiteImageInput, options?: RequestInit): Promise<SiteImage> => {
+
+  return customFetch<SiteImage>(getCreateSiteImageUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(siteImageInput)
+  }
+);}
+
+
+
+
+
+export const getCreateSiteImageMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSiteImage>>, TError,{data: BodyType<SiteImageInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createSiteImage>>, TError,{data: BodyType<SiteImageInput>}, TContext> => {
+
+const mutationKey = ['createSiteImage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSiteImage>>, {data: BodyType<SiteImageInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createSiteImage(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateSiteImageMutationResult = NonNullable<Awaited<ReturnType<typeof createSiteImage>>>
+    export type CreateSiteImageMutationBody = BodyType<SiteImageInput>
+    export type CreateSiteImageMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a site image (admin only)
+ */
+export const useCreateSiteImage = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSiteImage>>, TError,{data: BodyType<SiteImageInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createSiteImage>>,
+        TError,
+        {data: BodyType<SiteImageInput>},
+        TContext
+      > => {
+      return useMutation(getCreateSiteImageMutationOptions(options));
+    }
+
+export const getReorderSiteImagesUrl = () => {
+
+
+
+
+  return `/api/site-images/reorder`
+}
+
+/**
+ * @summary Reorder site images by section (admin only)
+ */
+export const reorderSiteImages = async (siteImagesReorderInput: SiteImagesReorderInput, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getReorderSiteImagesUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(siteImagesReorderInput)
+  }
+);}
+
+
+
+
+
+export const getReorderSiteImagesMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reorderSiteImages>>, TError,{data: BodyType<SiteImagesReorderInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reorderSiteImages>>, TError,{data: BodyType<SiteImagesReorderInput>}, TContext> => {
+
+const mutationKey = ['reorderSiteImages'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reorderSiteImages>>, {data: BodyType<SiteImagesReorderInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  reorderSiteImages(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReorderSiteImagesMutationResult = NonNullable<Awaited<ReturnType<typeof reorderSiteImages>>>
+    export type ReorderSiteImagesMutationBody = BodyType<SiteImagesReorderInput>
+    export type ReorderSiteImagesMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Reorder site images by section (admin only)
+ */
+export const useReorderSiteImages = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reorderSiteImages>>, TError,{data: BodyType<SiteImagesReorderInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reorderSiteImages>>,
+        TError,
+        {data: BodyType<SiteImagesReorderInput>},
+        TContext
+      > => {
+      return useMutation(getReorderSiteImagesMutationOptions(options));
+    }
+
+export const getUpdateSiteImageUrl = (id: number,) => {
+
+
+
+
+  return `/api/site-images/${id}`
+}
+
+/**
+ * @summary Update a site image (admin only)
+ */
+export const updateSiteImage = async (id: number,
+    siteImageInput: SiteImageInput, options?: RequestInit): Promise<SiteImage> => {
+
+  return customFetch<SiteImage>(getUpdateSiteImageUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(siteImageInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateSiteImageMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSiteImage>>, TError,{id: number;data: BodyType<SiteImageInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSiteImage>>, TError,{id: number;data: BodyType<SiteImageInput>}, TContext> => {
+
+const mutationKey = ['updateSiteImage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSiteImage>>, {id: number;data: BodyType<SiteImageInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateSiteImage(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateSiteImageMutationResult = NonNullable<Awaited<ReturnType<typeof updateSiteImage>>>
+    export type UpdateSiteImageMutationBody = BodyType<SiteImageInput>
+    export type UpdateSiteImageMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update a site image (admin only)
+ */
+export const useUpdateSiteImage = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSiteImage>>, TError,{id: number;data: BodyType<SiteImageInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateSiteImage>>,
+        TError,
+        {id: number;data: BodyType<SiteImageInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateSiteImageMutationOptions(options));
+    }
+
+export const getDeleteSiteImageUrl = (id: number,) => {
+
+
+
+
+  return `/api/site-images/${id}`
+}
+
+/**
+ * @summary Delete a site image (admin only)
+ */
+export const deleteSiteImage = async (id: number, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getDeleteSiteImageUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteSiteImageMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSiteImage>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteSiteImage>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteSiteImage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSiteImage>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteSiteImage(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteSiteImageMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSiteImage>>>
+
+    export type DeleteSiteImageMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a site image (admin only)
+ */
+export const useDeleteSiteImage = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSiteImage>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteSiteImage>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteSiteImageMutationOptions(options));
     }
 
 export const getGetPublicGalleryUrl = (token: string,) => {

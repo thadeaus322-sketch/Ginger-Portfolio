@@ -270,6 +270,108 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  # --- SITE IMAGES (admin + public read) ---
+  /site-images:
+    get:
+      operationId: listSiteImages
+      tags: [galleries]
+      summary: List site images (public — used by homepage and photography page)
+      parameters:
+        - name: section
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of site images
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SiteImage"
+
+    post:
+      operationId: createSiteImage
+      tags: [galleries]
+      summary: Create a site image (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SiteImageInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteImage"
+
+  /site-images/reorder:
+    post:
+      operationId: reorderSiteImages
+      tags: [galleries]
+      summary: Reorder site images by section (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SiteImagesReorderInput"
+      responses:
+        "200":
+          description: Reordered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /site-images/{id}:
+    patch:
+      operationId: updateSiteImage
+      tags: [galleries]
+      summary: Update a site image (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SiteImageInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteImage"
+
+    delete:
+      operationId: deleteSiteImage
+      tags: [galleries]
+      summary: Delete a site image (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
   # --- PUBLIC GALLERY ---
   /gallery/{token}:
     get:
@@ -509,6 +611,64 @@ components:
         contentType:
           type: string
       required: [name, size, contentType]
+
+    SiteImage:
+      type: object
+      properties:
+        id:
+          type: integer
+        section:
+          type: string
+        category:
+          type: string
+        title:
+          type: string
+        label:
+          type: string
+        imageUrl:
+          type: string
+        sortOrder:
+          type: integer
+        tall:
+          type: boolean
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, section, category, title, label, imageUrl, sortOrder, tall, isActive, createdAt]
+
+    SiteImageInput:
+      type: object
+      properties:
+        section:
+          type: string
+        category:
+          type: string
+        title:
+          type: string
+        label:
+          type: string
+        imageUrl:
+          type: string
+        sortOrder:
+          type: integer
+        tall:
+          type: boolean
+        isActive:
+          type: boolean
+      required: [section, imageUrl]
+
+    SiteImagesReorderInput:
+      type: object
+      properties:
+        section:
+          type: string
+        ids:
+          type: array
+          items:
+            type: integer
+      required: [section, ids]
 
     RequestUploadUrlResponse:
       type: object
