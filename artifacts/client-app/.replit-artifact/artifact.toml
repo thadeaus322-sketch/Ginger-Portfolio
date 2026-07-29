@@ -1,0 +1,23 @@
+kind = "mobile"
+previewPath = "/client-app/"
+title = "Ginger Studios Client App"
+version = "1.0.0"
+id = "artifacts/client-app"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/client-app/" ]
+localPort = 26251
+
+[services.development]
+run = "pnpm --filter @workspace/client-app run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/client-app", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/client-app", "run", "serve" ]
+
+[services.env]
+PORT = "26251"
+BASE_PATH = "/client-app/"
