@@ -1,267 +1,183 @@
-# 🌿 Ginger Studios & Creatives — Self-Hosting Guide
+# 🌿 Ginger Studios & Creatives — Hosting Guide (cPanel Node.js App)
+
+This guide is written specifically for hosts with **cPanel + Node.js App** (like Harmon Web Host).
+
+---
 
 ## What's in This Package
 
 ```
 ginger-studios-deploy/
 ├── server/
-│   ├── dist/           ← Built Node.js server (API + serves frontend)
-│   ├── public/         ← Frontend static files + your images
-│   └── package.json    ← Server dependencies
+│   ├── dist/           ← Built Node.js server (your "Application file")
+│   ├── public/         ← Frontend + your images
+│   └── package.json    ← Server dependencies (mysql2, sharp)
 ├── database/
 │   └── schema.mysql.sql  ← Import this into phpMyAdmin
-├── uploads/            ← File uploads land here (keep writable)
-├── .env.example        ← Copy to .env and fill in your values
-└── start.sh            ← Start/restart the server
+├── uploads/            ← Uploaded images are saved here
+├── .env.example        ← Reference — you'll enter these in cPanel
+└── HOSTING_GUIDE.md    ← This file
 ```
 
 ---
 
-## Requirements on Your Host
+## Step 1 — Create the MySQL Database in cPanel
 
-| Requirement | Minimum Version | Notes |
-|------------|----------------|-------|
-| Node.js    | 20+            | LTS recommended |
-| MySQL      | 5.7.8+ or 8+   | Needed for JSON column type |
-| phpMyAdmin | Any recent     | For managing the database |
-| Web Server | Apache or Nginx | Reverse proxy to Node.js |
+1. Log into **cPanel**.
+2. Find **MySQL Databases** (under Databases section).
+3. Under **Create New Database**, type a name e.g. `gingerstudios` → Click **Create Database**.
+4. Under **Create New User**, type a username + strong password → Click **Create User**.
+5. Under **Add User to Database**, select your new user and database → Click **Add** → tick **All Privileges** → **Make Changes**.
+6. Write down your credentials:
+   - Database name: `youraccount_gingerstudios`
+   - Username: `youraccount_dbuser`
+   - Password: `your-db-password`
+   - Host: `localhost`
 
-> **Shared hosting note:** Most cheap shared hosts (e.g. Hostinger, Namecheap Starter) do **not** support running Node.js applications. You need either:
-> - A **VPS** (Hostinger VPS, DigitalOcean, Vultr, Hetzner — from $4-6/month), or
-> - A host with **Node.js App support** in cPanel (e.g. Hostinger Business plan, A2 Hosting)
-
----
-
-## Step 1 — Set Up the MySQL Database
-
-1. Log into **phpMyAdmin** on your host.
-2. Click **"New"** on the left sidebar to create a database.
-3. Name it `ginger_studios` (or whatever you prefer), select **utf8mb4_unicode_ci** collation, click **Create**.
-4. Click your new database in the left sidebar.
-5. Click the **Import** tab at the top.
-6. Click **Choose File** and select `database/schema.mysql.sql` from this package.
-7. Click **Go** / **Import**.
-
-You should now see three tables: `admin_users`, `galleries`, `site_images`.
-
-> **Note:** MySQL 5.7.8+ is required for the JSON column type used by the `galleries` table. If your host runs an older MySQL, contact their support to upgrade.
+> **Note:** cPanel prefixes your database and username with your cPanel account name (e.g. `johndo_gingerstudios`). The full name is shown on the MySQL Databases page.
 
 ---
 
-## Step 2 — Upload Files to Your Server
+## Step 2 — Import the Database Schema in phpMyAdmin
 
-### Option A — VPS (SSH access)
+1. In cPanel, open **phpMyAdmin**.
+2. Click your new database in the left panel.
+3. Click the **Import** tab at the top.
+4. Click **Choose File** → select `database/schema.mysql.sql` from this package.
+5. Scroll down → click **Go**.
 
-```bash
-# Upload the package to your server
-scp -r ginger-studios-deploy/ user@your-server:/var/www/ginger-studios
+You should now see three tables listed: `admin_users`, `galleries`, `site_images`.
 
-# SSH into the server
-ssh user@your-server
+---
 
-cd /var/www/ginger-studios/server
-npm install --production    # Install server dependencies
-```
+## Step 3 — Upload Files via File Manager
 
-### Option B — cPanel File Manager or FTP
+1. In cPanel, open **File Manager**.
+2. Navigate to your web root (usually `public_html/`) or create a subfolder, e.g. `public_html/ginger/`.
+3. Click **Upload** and upload the entire `ginger-studios-deploy` folder contents (or zip and extract).
 
-1. Zip the `ginger-studios-deploy` folder.
-2. Upload the zip via cPanel File Manager or FTP to a folder like `/home/youraccount/ginger-studios`.
-3. Extract it on the server.
-4. Open cPanel Terminal (or SSH) and run:
-   ```bash
-   cd /home/youraccount/ginger-studios/server
-   npm install --production
+   **After uploading, your structure should look like:**
+   ```
+   public_html/
+   └── ginger/                   ← or wherever you chose
+       ├── server/
+       │   ├── dist/
+       │   ├── public/
+       │   └── package.json
+       ├── uploads/
+       └── database/
    ```
 
 ---
 
-## Step 3 — Configure Environment Variables
+## Step 4 — Set Up the Node.js App in cPanel
 
-1. In your `server/` folder, copy `.env.example` to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
+1. In cPanel, find **Setup Node.js App** (under Software section).
+2. Click **Create Application**.
+3. Fill in:
 
-2. Edit `.env` with your real values:
-   ```
-   # Database — your MySQL connection string
-   DATABASE_URL=mysql://DB_USER:DB_PASSWORD@localhost:3306/ginger_studios
+   | Field | Value |
+   |-------|-------|
+   | **Node.js version** | 20 (or highest available) |
+   | **Application mode** | Production |
+   | **Application root** | `public_html/ginger/server` |
+   | **Application URL** | Your domain or subdomain (e.g. `yourdomain.com` or `ginger.yourdomain.com`) |
+   | **Application startup file** | `dist/index.mjs` |
 
-   # Security — generate a strong random string (32+ characters)
-   # You can use: openssl rand -base64 32
-   SESSION_SECRET=your-very-long-random-secret-here
-
-   # Admin credentials (used if no admin in database)
-   ADMIN_EMAIL=admin@yourdomain.com
-   ADMIN_PASSWORD_HASH=   ← see note below
-
-   # Storage: use "local" for your own server uploads
-   STORAGE_MODE=local
-   UPLOADS_DIR=/var/www/ginger-studios/uploads
-
-   # Server
-   PORT=3001
-   NODE_ENV=production
-   ```
-
-3. **Generating ADMIN_PASSWORD_HASH:**
-   Your password is stored as a SHA-256 hex hash. Generate it with:
-   ```bash
-   echo -n "YourNewPassword123!" | sha256sum
-   # Copy the hash (first 64 characters)
-   ```
-   Or use an online SHA-256 tool (search "sha256 online").
-
-   **Default credentials (change these!):**
-   - Email: `admin@gingerstudios.com`
-   - Password: `GingerStudios2026!`
+4. Click **Create** (or **Save**).
 
 ---
 
-## Step 4 — Start the Server
+## Step 5 — Set Environment Variables
 
-Make the start script executable and run it:
+Still inside **Setup Node.js App**, find the **Environment Variables** section and add each of these:
 
-```bash
-chmod +x /var/www/ginger-studios/start.sh
-/var/www/ginger-studios/start.sh
-```
+| Variable | Value |
+|----------|-------|
+| `DATABASE_URL` | `mysql://youraccount_dbuser:your-db-password@localhost:3306/youraccount_gingerstudios` |
+| `SESSION_SECRET` | A long random string — see below to generate one |
+| `ADMIN_EMAIL` | `admin@yourdomain.com` |
+| `ADMIN_PASSWORD_HASH` | SHA-256 hash of your admin password — see below |
+| `STORAGE_MODE` | `local` |
+| `UPLOADS_DIR` | `/home/youraccount/public_html/ginger/uploads` (absolute path) |
+| `NODE_ENV` | `production` |
+| `PORT` | `3000` (cPanel usually assigns this automatically — if it does, skip this) |
 
-This starts the server with PM2 (process manager) so it stays running after reboots.
+**Click Save / Run NPM Install** after adding all variables.
 
-**If PM2 is not installed:**
-```bash
-npm install -g pm2
-pm2 startup   # Follow the instructions to auto-start on reboot
-```
+### Generating SESSION_SECRET
 
----
+Go to any online random string generator and generate a 32+ character string, e.g.:
+`xK9mP2qL8nR5sT1vW4yZ7aB0cE3fH6j`
 
-## Step 5 — Configure Your Web Server (Reverse Proxy)
+### Generating ADMIN_PASSWORD_HASH
 
-The Node.js app runs on port 3001 internally. Your web server (Apache/Nginx) must proxy requests to it.
+Your admin password is stored as a SHA-256 hash. To generate it:
 
-### Nginx (recommended for VPS)
+1. Go to **[emn178.github.io/online-tools/sha256.html](https://emn178.github.io/online-tools/sha256.html)**
+2. Type your desired password (e.g. `MyNewPassword2026!`) in the Input field
+3. Copy the Output — that's your `ADMIN_PASSWORD_HASH`
 
-Create `/etc/nginx/sites-available/ginger-studios`:
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com www.yourdomain.com;
-
-    # Increase upload size limit for image uploads
-    client_max_body_size 100M;
-
-    location / {
-        proxy_pass http://127.0.0.1:3001;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-        proxy_read_timeout 300s;
-    }
-
-    # Serve uploaded files directly (more efficient)
-    location /uploads/ {
-        alias /var/www/ginger-studios/uploads/;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-}
-```
-
-Enable it:
-```bash
-ln -s /etc/nginx/sites-available/ginger-studios /etc/nginx/sites-enabled/
-nginx -t     # Test config
-systemctl reload nginx
-```
-
-### Apache (cPanel hosts)
-
-Create/edit `.htaccess` in your public web root:
-```apache
-RewriteEngine On
-RewriteRule ^(.*)$ http://127.0.0.1:3001/$1 [P,L]
-```
-Or use the **cPanel → Node.js App** interface to point to the app directory.
+**Default password** (change this!): `GingerStudios2026!`
+**Its hash** (copy if keeping the default): `afc30d616ab1a3a18c64e90c2f2d77c3aa2b0e396e2c55b37e80d1d09d3e5b2f`
 
 ---
 
-## Step 6 — Set Up SSL (HTTPS)
+## Step 6 — Install Dependencies
 
-**Free SSL with Let's Encrypt (VPS with Nginx):**
+In the **Setup Node.js App** interface, look for a button that says **Run NPM Install** or **Install Dependencies**. Click it.
+
+This installs `mysql2` and `sharp` from the `server/package.json` file.
+
+If there's no button, use the **cPanel Terminal** (under Advanced):
 ```bash
-apt install certbot python3-certbot-nginx   # Ubuntu/Debian
-certbot --nginx -d yourdomain.com -d www.yourdomain.com
-```
-
-**cPanel hosts:** Use the free Let's Encrypt option in cPanel → SSL/TLS.
-
----
-
-## Step 7 — Point Your Domain
-
-In your domain registrar (Namecheap, GoDaddy, etc.):
-- Set the **A record** to point to your server's IP address.
-- Wait 15–60 minutes for DNS to propagate.
-
----
-
-## How Image Uploads Work
-
-When you upload images through the admin panel, they are saved to the `uploads/` folder on your server. The URL stored in the database will look like:
-
-```
-/api/storage/objects/uploads/uuid-filename
-```
-
-This is served directly by the Node.js server. The `uploads/` folder must be **writable** by the Node.js process:
-```bash
-chmod 755 /var/www/ginger-studios/uploads
-chown -R www-data:www-data /var/www/ginger-studios/uploads   # if using nginx
+cd ~/public_html/ginger/server
+npm install --production
 ```
 
 ---
 
-## Admin Panel
+## Step 7 — Start the App
 
-Once running, visit: `https://yourdomain.com/admin`
+In **Setup Node.js App**, click the **Start** button (or **Restart** if it was already running).
 
-Default login:
-- **Email:** `admin@gingerstudios.com`
-- **Password:** `GingerStudios2026!`
-
-**Change these immediately** after first login via Admin → Settings.
+The status should change to **Running** (green dot).
 
 ---
 
-## Maintenance
+## Step 8 — Test
 
-### Restart the server
+Visit your domain in a browser. You should see the Ginger Studios website.
+
+**Admin panel:** `https://yourdomain.com/admin`
+- Email: `admin@yourdomain.com` (or whatever you set)
+- Password: `GingerStudios2026!` (or whatever you chose)
+
+**Change your password immediately** via Admin → Settings.
+
+---
+
+## How Uploads Work
+
+When you upload images through the admin panel:
+- Files are saved to the `uploads/` folder on your server
+- The image URL stored in the database looks like: `/api/storage/objects/uploads/[filename]`
+- The server serves these files directly
+
+**Make sure the uploads folder is writable:**
+
+In cPanel Terminal:
 ```bash
-pm2 restart ginger-studios
+chmod 755 ~/public_html/ginger/uploads
 ```
 
-### View logs
-```bash
-pm2 logs ginger-studios
-```
+---
 
-### Stop the server
-```bash
-pm2 stop ginger-studios
-```
+## Updating the Site
 
-### Backup the database
-```bash
-mysqldump -u DB_USER -p ginger_studios > backup-$(date +%Y%m%d).sql
-```
+If you need to deploy an updated version:
+1. Replace files in `server/dist/` and `server/public/` via File Manager
+2. Click **Restart** in Setup Node.js App
 
 ---
 
@@ -269,24 +185,34 @@ mysqldump -u DB_USER -p ginger_studios > backup-$(date +%Y%m%d).sql
 
 | Problem | Fix |
 |---------|-----|
-| "Cannot connect to database" | Check `DATABASE_URL` in `.env`. Verify MySQL is running: `systemctl status mysql` |
-| Upload fails with 413 | Increase Nginx `client_max_body_size` to `100M` |
-| White screen / 502 error | Check `pm2 logs ginger-studios` for errors |
-| Images not loading | Check that `uploads/` folder exists and is writable |
-| Admin login fails | Check `ADMIN_EMAIL` and `ADMIN_PASSWORD_HASH` in `.env` |
-| Port already in use | Change `PORT` in `.env` to e.g. `3002` and update Nginx config |
+| "Application failed to start" | Check **Error Logs** in cPanel → double-check `DATABASE_URL` format |
+| White screen / nothing loads | Make sure Application startup file is `dist/index.mjs` |
+| Database connection error | Verify MySQL username/password/database name in `DATABASE_URL` |
+| Upload fails | Check `UPLOADS_DIR` is set to the correct absolute path and folder is writable |
+| Admin login fails | Verify `ADMIN_EMAIL` and `ADMIN_PASSWORD_HASH` match your chosen credentials |
+| "Cannot find module mysql2" | Run NPM Install again in Setup Node.js App |
+
+### Finding the Absolute Path for UPLOADS_DIR
+
+In cPanel Terminal, run:
+```bash
+echo ~/public_html/ginger/uploads
+```
+Copy the output — that's your `UPLOADS_DIR`.
 
 ---
 
-## Recommended Hosts (tested with Node.js)
+## Your DATABASE_URL Format
 
-| Host | Type | Price | Notes |
-|------|------|-------|-------|
-| Hetzner CX21 | VPS | ~€4/mo | Best value, Germany |
-| Hostinger KVM 1 | VPS | ~$5/mo | Easy cPanel panel |
-| DigitalOcean Droplet | VPS | $6/mo | Great docs |
-| A2 Hosting Startup | Shared | ~$10/mo | Has Node.js support in cPanel |
+```
+mysql://USERNAME:PASSWORD@localhost:3306/DATABASENAME
+```
+
+Example with cPanel-prefixed names:
+```
+mysql://johndo_dbuser:MySecretPass123@localhost:3306/johndo_gingerstudios
+```
 
 ---
 
-*Generated for Ginger Studios & Creatives — July 2026*
+*Generated for Harmon Web Host — Ginger Studios & Creatives — July 2026*
