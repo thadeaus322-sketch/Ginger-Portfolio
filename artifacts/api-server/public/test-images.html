@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Image Diagnostic — Ginger Studios</title>
+  <style>
+    body { font-family: sans-serif; background: #1a1410; color: #FBF6EE; padding: 2rem; }
+    h1 { color: #F0961B; }
+    .test { margin: 1.5rem 0; padding: 1rem; border: 1px solid #333; border-radius: 8px; }
+    .test p { margin: 0 0 0.5rem; font-size: 0.8rem; opacity: 0.6; }
+    img { max-width: 300px; max-height: 200px; object-fit: cover; border-radius: 4px; }
+    .ok { color: #4ade80; } .fail { color: #f87171; }
+  </style>
+</head>
+<body>
+  <h1>Image Server Diagnostic</h1>
+  <p>If images appear below, the server is serving files correctly and the issue is elsewhere.<br>
+     If images do <strong>not</strong> appear, the files are missing or have wrong permissions (need 644).</p>
+
+  <div class="test">
+    <p>/images/logo-icon.png</p>
+    <img src="/images/logo-icon.png" onerror="this.nextElementSibling.className='fail'" onload="this.nextElementSibling.className='ok'" alt="logo" />
+    <span>⏳ loading…</span>
+  </div>
+  <div class="test">
+    <p>/images/wedding-bride.jpg</p>
+    <img src="/images/wedding-bride.jpg" onerror="this.nextElementSibling.className='fail'" onload="this.nextElementSibling.className='ok'" alt="wedding" />
+    <span>⏳ loading…</span>
+  </div>
+  <div class="test">
+    <p>/images/event-1.jpg</p>
+    <img src="/images/event-1.jpg" onerror="this.nextElementSibling.className='fail'" onload="this.nextElementSibling.className='ok'" alt="event" />
+    <span>⏳ loading…</span>
+  </div>
+
+  <hr style="border-color:#333; margin: 2rem 0" />
+  <p style="font-size:0.75rem; opacity:0.4">Delete this file after diagnosing. It is not part of the live site.</p>
+</body>
+</html>

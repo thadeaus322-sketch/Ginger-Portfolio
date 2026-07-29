@@ -1,13 +1,18 @@
 import { Readable } from 'stream';
+import fs from 'fs';
+import fsp from 'fs/promises';
+import path from 'path';
 import {
   RequestUploadUrlBody,
   RequestUploadUrlResponse,
 } from '@workspace/api-zod';
-import { Router, type IRouter, type Request, type Response } from 'express';
+import express, { Router, type IRouter, type Request, type Response } from 'express';
 import { requireAdmin } from '../middlewares/auth.js';
 import {
   ObjectNotFoundError,
   ObjectStorageService,
+  STORAGE_MODE,
+  getLocalUploadsDir,
 } from '../lib/objectStorage.js';
 
 const router: IRouter = Router();
@@ -33,9 +38,14 @@ router.post(
     try {
       const { name, size, contentType } = parsed.data;
 
-      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-      const objectPath =
-        objectStorageService.normalizeObjectEntityPath(uploadURL);
+      // Build base URL for local mode so the browser can PUT back to us
+      const baseUrl =
+        STORAGE_MODE === 'local'
+          ? `${req.protocol}://${req.get('host')}`
+          : undefined;
+
+      const { uploadURL, objectPath } =
+        await objectStorageService.getObjectEntityUploadURLAndPath(baseUrl);
 
       res.json(
         RequestUploadUrlResponse.parse({
@@ -52,6 +62,40 @@ router.post(
 );
 
 /**
+ * PUT /storage/uploads/local/:uuid  (local storage mode only)
+ *
+ * Receives a raw file body and saves it to disk.
+ * This endpoint replaces the GCS presigned PUT in local mode.
+ */
+router.put(
+  '/storage/uploads/local/:uuid',
+  requireAdmin,
+  express.raw({ type: '*/*', limit: '100mb' }),
+  async (req: Request, res: Response) => {
+    if (STORAGE_MODE !== 'local') {
+      res.status(404).json({ error: 'Not available in this storage mode' });
+      return;
+    }
+    const { uuid } = req.params;
+    // Reject path traversal
+    if (!/^[0-9a-f-]+$/i.test(uuid)) {
+      res.status(400).json({ error: 'Invalid upload id' });
+      return;
+    }
+    try {
+      const uploadsDir = path.join(getLocalUploadsDir(), 'uploads');
+      await fsp.mkdir(uploadsDir, { recursive: true });
+      const filePath = path.join(uploadsDir, uuid);
+      await fsp.writeFile(filePath, req.body as Buffer);
+      res.status(200).end();
+    } catch (error) {
+      req.log.error({ err: error }, 'Error saving local upload');
+      res.status(500).json({ error: 'Failed to save file' });
+    }
+  },
+);
+
+/**
  * GET /storage/public-objects/*
  *
  * Serve public assets from PUBLIC_OBJECT_SEARCH_PATHS.
@@ -60,6 +104,10 @@ router.post(
 router.get(
   '/storage/public-objects/*filePath',
   async (req: Request, res: Response) => {
+    if (STORAGE_MODE === 'local') {
+      res.status(404).json({ error: 'Public object search not available in local mode' });
+      return;
+    }
     try {
       const raw = req.params.filePath;
       const filePath = Array.isArray(raw) ? raw.join('/') : raw;
@@ -96,9 +144,34 @@ router.get(
  * Public access — clients can view their gallery photos.
  */
 router.get('/storage/objects/*path', async (req: Request, res: Response) => {
+  const raw = req.params.path;
+  const wildcardPath = Array.isArray(raw) ? raw.join('/') : raw;
+
+  // ── Local disk mode ────────────────────────────────────────────────────────
+  if (STORAGE_MODE === 'local') {
+    try {
+      const filePath = path.join(getLocalUploadsDir(), wildcardPath);
+      // Prevent path traversal
+      const uploadsDir = getLocalUploadsDir();
+      if (!filePath.startsWith(uploadsDir)) {
+        res.status(400).json({ error: 'Invalid path' });
+        return;
+      }
+      if (!fs.existsSync(filePath)) {
+        res.status(404).json({ error: 'Object not found' });
+        return;
+      }
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.sendFile(filePath);
+    } catch (error) {
+      req.log.error({ err: error }, 'Error serving local object');
+      res.status(500).json({ error: 'Failed to serve object' });
+    }
+    return;
+  }
+
+  // ── GCS / Replit mode ──────────────────────────────────────────────────────
   try {
-    const raw = req.params.path;
-    const wildcardPath = Array.isArray(raw) ? raw.join('/') : raw;
     const objectPath = `/objects/${wildcardPath}`;
     const objectFile =
       await objectStorageService.getObjectEntityFile(objectPath);

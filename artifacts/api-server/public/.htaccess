@@ -1,0 +1,43 @@
+# ── Ginger Studios — Apache / cPanel configuration ───────────────────────────
+# Works on Apache 2.2+ with mod_rewrite enabled (all standard cPanel hosts).
+
+Options -Indexes
+DirectoryIndex index.html
+
+# ── MIME types ────────────────────────────────────────────────────────────────
+AddType image/svg+xml         .svg
+AddType image/webp             .webp
+AddType video/mp4              .mp4
+AddType font/woff2             .woff2
+AddType application/javascript .js
+AddType text/css               .css
+
+# ── Caching ───────────────────────────────────────────────────────────────────
+<IfModule mod_expires.c>
+  ExpiresActive On
+  <FilesMatch "\.(js|css)$">
+    ExpiresDefault "access plus 1 year"
+  </FilesMatch>
+  <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|ico|mp4|woff2)$">
+    ExpiresDefault "access plus 1 month"
+  </FilesMatch>
+</IfModule>
+
+# ── SPA routing ───────────────────────────────────────────────────────────────
+# React Router handles all navigation client-side. We only send requests to
+# index.html when no real file or directory matches — this means images, JS,
+# CSS, fonts, and videos are always served directly without rewriting.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Never rewrite index.html itself
+  RewriteRule ^index\.html$ - [L]
+
+  # If the request is for a real file (image, JS, CSS, video…) — serve it as-is
+  RewriteCond %{REQUEST_FILENAME} !-f
+  # If the request is for a real directory — serve it as-is
+  RewriteCond %{REQUEST_FILENAME} !-d
+  # Anything else (client-side routes) → index.html
+  RewriteRule . /index.html [L]
+</IfModule>
