@@ -25,6 +25,18 @@ export interface LoginInput {
 export interface AdminUser {
   id: number;
   email: string;
+  usingDefaults?: boolean;
+}
+
+export interface AdminSettingsInput {
+  currentPassword: string;
+  newPassword?: string;
+  newEmail?: string;
+}
+
+export interface AdminSettingsResponse {
+  ok: boolean;
+  email: string;
 }
 
 export type GalleryStatus = typeof GalleryStatus[keyof typeof GalleryStatus];

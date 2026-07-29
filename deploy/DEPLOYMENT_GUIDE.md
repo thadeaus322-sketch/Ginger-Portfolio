@@ -97,12 +97,16 @@ Generate a strong random secret:
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```
 
-### ADMIN credentials
-Set the email you want to log in with, then hash your chosen password:
+### ADMIN credentials (temporary — you'll change these after first login)
+These are your **initial** login credentials. After you first log in, go to
+**Admin → Settings** to change them to something private. Once changed, the
+new credentials are stored in the database and the env vars are ignored.
+
+Set the email you want to use for first login, then generate a temporary password hash:
 ```bash
 node -e "
 const { createHash } = require('crypto');
-const hash = createHash('sha256').update('YourNewPassword').digest('hex');
+const hash = createHash('sha256').update('YourTempPassword').digest('hex');
 console.log(hash);
 "
 ```
@@ -212,13 +216,25 @@ DNS changes take a few minutes to a few hours to propagate.
 
 ---
 
+## Step 9 — First login: change your credentials immediately
+
+1. Go to `https://yourdomain.com/admin` and log in with the temporary credentials from your `.env` file.
+2. Click **Settings** in the left sidebar.
+3. You'll see a yellow warning banner — change both your **email** and **password** right away.
+4. Once saved, the new credentials are stored securely in the database. The env var values are no longer used.
+5. Keep your new password safe — there is no recovery mechanism if you forget it.
+
+---
+
 ## Logging in as admin
 
-Go to `https://yourdomain.com/admin` and sign in with the `ADMIN_EMAIL` and password you configured in Step 4.
+Go to `https://yourdomain.com/admin` and sign in with your credentials.
 
 From the admin panel you can:
-- **Site Images** — upload and manage homepage hero photos, card-stack images, and the photography portfolio
+- **Dashboard** — view gallery stats and activity
 - **Galleries** — create and share private client galleries
+- **Site Images** — upload and manage homepage hero photos, card-stack images, and the photography portfolio
+- **Settings** — change your admin email and password
 
 ---
 
@@ -230,6 +246,8 @@ When a new version is available:
 3. If the schema changed, re-run `schema.sql` (it uses `IF NOT EXISTS` so it's safe)
 4. `pm2 restart ginger-studios`
 
+> Your credentials stay in the database — they are not affected by updates.
+
 ---
 
 ## Troubleshooting
@@ -239,6 +257,8 @@ When a new version is available:
 | White screen / 404 | Check that `public/index.html` exists in the deploy folder |
 | `DATABASE_URL` error on start | Verify the connection string and that PostgreSQL is running |
 | Image uploads fail | Check `UPLOADS_DIR` exists and is writable by the Node process |
-| Admin login loop | Make sure `SESSION_SECRET` is set and `ADMIN_PASSWORD_HASH` matches your password |
+| Admin login fails after credential change | Use the new email/password you set in Admin → Settings |
+| Admin login fails (never changed credentials) | Use the email/password from your `.env` file |
 | Port already in use | Change `PORT` in `.env` and update the `proxy_pass` port in nginx.conf |
 | 413 Request Entity Too Large | Increase `client_max_body_size` in nginx.conf |
+| Forgot password (credentials were changed) | Reset: connect to your DB and run `DELETE FROM admin_users;` — this restores the env var credentials |

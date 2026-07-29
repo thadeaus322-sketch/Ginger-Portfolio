@@ -59,6 +59,37 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /auth/update-settings:
+    post:
+      operationId: updateAdminSettings
+      tags: [auth]
+      summary: Update admin email and/or password (requires current password)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminSettingsInput"
+      responses:
+        "200":
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSettingsResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Wrong current password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /auth/logout:
     post:
       operationId: adminLogout
@@ -462,7 +493,29 @@ components:
           type: integer
         email:
           type: string
+        usingDefaults:
+          type: boolean
       required: [id, email]
+
+    AdminSettingsInput:
+      type: object
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+        newEmail:
+          type: string
+      required: [currentPassword]
+
+    AdminSettingsResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        email:
+          type: string
+      required: [ok, email]
 
     Gallery:
       type: object

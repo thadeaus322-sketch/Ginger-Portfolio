@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useGetMe, useAdminLogout } from "@workspace/api-client-react";
-import { LayoutDashboard, Images, PlusCircle, LogOut, LayoutTemplate } from "lucide-react";
+import { LayoutDashboard, Images, PlusCircle, LogOut, LayoutTemplate, Settings } from "lucide-react";
 import { img } from "@/lib/assets";
 const logoIcon = img("images/logo-icon.png");
 
@@ -32,6 +32,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     { label: "Galleries", href: "/admin/galleries", icon: Images },
     { label: "New Gallery", href: "/admin/galleries/new", icon: PlusCircle },
     { label: "Site Images", href: "/admin/site-images", icon: LayoutTemplate },
+    { label: "Settings", href: "/admin/settings", icon: Settings },
   ];
 
   if (isLoading) {

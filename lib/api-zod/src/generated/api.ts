@@ -26,6 +26,22 @@ export const AdminLoginBody = zod.object({
 
 export const AdminLoginResponse = zod.object({
   "id": zod.number(),
+  "email": zod.string(),
+  "usingDefaults": zod.boolean().optional()
+})
+
+
+/**
+ * @summary Update admin email and/or password (requires current password)
+ */
+export const UpdateAdminSettingsBody = zod.object({
+  "currentPassword": zod.string(),
+  "newPassword": zod.string().optional(),
+  "newEmail": zod.string().optional()
+})
+
+export const UpdateAdminSettingsResponse = zod.object({
+  "ok": zod.boolean(),
   "email": zod.string()
 })
 
@@ -43,7 +59,8 @@ export const AdminLogoutResponse = zod.object({
  */
 export const GetMeResponse = zod.object({
   "id": zod.number(),
-  "email": zod.string()
+  "email": zod.string(),
+  "usingDefaults": zod.boolean().optional()
 })
 
 
