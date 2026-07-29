@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { useGetMe, useAdminLogout } from "@workspace/api-client-react";
+import { useGetMe, useAdminLogout, getGetMeQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { LayoutDashboard, Images, PlusCircle, LogOut, LayoutTemplate, Settings } from "lucide-react";
 import { img } from "@/lib/assets";
 const logoIcon = img("images/logo-icon.png");
@@ -9,7 +10,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: user, isLoading } = useGetMe({ query: { retry: false } as any });
-  
+  const queryClient = useQueryClient();
   const logout = useAdminLogout();
 
   // Must be in useEffect — calling setLocation during render causes an infinite crash loop
@@ -22,6 +23,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const handleLogout = () => {
     logout.mutate(undefined, {
       onSuccess: () => {
+        // Clear cached auth state so login page doesn't redirect back
+        queryClient.removeQueries({ queryKey: getGetMeQueryKey() });
         setLocation("/admin");
       }
     });

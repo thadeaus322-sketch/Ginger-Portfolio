@@ -28,7 +28,8 @@ export default function Settings() {
       toast({ title: "Email updated", description: "Your login email has been changed. Log in again to see it reflected." });
       setEmailForm({ currentPassword: "", newEmail: "" });
     } catch (err: unknown) {
-      const msg = (err as { message?: string })?.message ?? "Failed to update email";
+      const apiErr = err as { data?: { error?: string }; message?: string };
+      const msg = apiErr?.data?.error ?? apiErr?.message ?? "Failed to update email";
       toast({ title: "Error", description: msg, variant: "destructive" });
     } finally {
       setEmailLoading(false);
@@ -54,7 +55,8 @@ export default function Settings() {
       toast({ title: "Password updated", description: "Your password has been changed successfully." });
       setPwForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
     } catch (err: unknown) {
-      const msg = (err as { message?: string })?.message ?? "Failed to update password";
+      const apiErr = err as { data?: { error?: string }; message?: string };
+      const msg = apiErr?.data?.error ?? apiErr?.message ?? "Failed to update password";
       toast({ title: "Error", description: msg, variant: "destructive" });
     } finally {
       setPwLoading(false);
