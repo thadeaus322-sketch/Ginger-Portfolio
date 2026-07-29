@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, galleriesTable } from "@workspace/db";
-import { eq, desc, sql, and } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/auth.js";
 import { generateAccessToken } from "../lib/auth.js";
 import type { GalleryRow } from "@workspace/db";
@@ -32,8 +32,8 @@ function toApiGallery(g: GalleryRow) {
     viewCount: g.viewCount,
     imageCount: (g.imageUrls ?? []).length,
     status: computeStatus(g),
-    createdAt: g.createdAt.toISOString(),
-    expiresAt: g.expiresAt.toISOString(),
+    createdAt: g.createdAt instanceof Date ? g.createdAt.toISOString() : String(g.createdAt),
+    expiresAt: g.expiresAt instanceof Date ? g.expiresAt.toISOString() : String(g.expiresAt),
   };
 }
 
@@ -92,7 +92,7 @@ router.post("/galleries", async (req, res) => {
     ? new Date(expiresAt)
     : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000); // 90 days
 
-  const [gallery] = await db
+  const result = await db
     .insert(galleriesTable)
     .values({
       clientName,
@@ -102,8 +102,11 @@ router.post("/galleries", async (req, res) => {
       notes: notes ?? null,
       accessToken: generateAccessToken(),
       expiresAt: expiry,
-    })
-    .returning();
+    });
+
+  // MySQL doesn't support .returning() — fetch by insertId
+  const insertId = (result[0] as any).insertId as number;
+  const [gallery] = await db.select().from(galleriesTable).where(eq(galleriesTable.id, insertId));
 
   res.status(201).json(toApiGallery(gallery));
 });
@@ -124,13 +127,14 @@ router.patch("/galleries/:id", async (req, res) => {
   const id = parseInt(req.params.id ?? "", 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
-  const { clientName, shootTitle, expiresAt, status, notes, coverUrl } = req.body as {
+  const { clientName, shootTitle, expiresAt, status, notes, coverUrl, imageUrls } = req.body as {
     clientName?: string | null;
     shootTitle?: string | null;
     expiresAt?: string | null;
     status?: string | null;
     notes?: string | null;
     coverUrl?: string | null;
+    imageUrls?: string[] | null;
   };
 
   const updates: Partial<typeof galleriesTable.$inferInsert> = {};
@@ -138,16 +142,18 @@ router.patch("/galleries/:id", async (req, res) => {
   if (shootTitle != null) updates.shootTitle = shootTitle;
   if (notes !== undefined) updates.notes = notes;
   if (coverUrl !== undefined) updates.coverUrl = coverUrl;
+  if (imageUrls !== undefined) updates.imageUrls = imageUrls ?? [];
   if (expiresAt != null) updates.expiresAt = new Date(expiresAt);
   if (status === "revoked") updates.isRevoked = true;
   if (status === "active") updates.isRevoked = false;
 
-  const [updated] = await db
+  await db
     .update(galleriesTable)
     .set(updates)
-    .where(eq(galleriesTable.id, id))
-    .returning();
+    .where(eq(galleriesTable.id, id));
 
+  // MySQL doesn't support .returning() — fetch after update
+  const [updated] = await db.select().from(galleriesTable).where(eq(galleriesTable.id, id));
   if (!updated) { res.status(404).json({ error: "Gallery not found" }); return; }
 
   res.json(toApiGallery(updated));
@@ -167,12 +173,13 @@ router.post("/galleries/:id/regenerate-link", async (req, res) => {
   const id = parseInt(req.params.id ?? "", 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
-  const [updated] = await db
+  await db
     .update(galleriesTable)
     .set({ accessToken: generateAccessToken() })
-    .where(eq(galleriesTable.id, id))
-    .returning();
+    .where(eq(galleriesTable.id, id));
 
+  // MySQL doesn't support .returning() — fetch after update
+  const [updated] = await db.select().from(galleriesTable).where(eq(galleriesTable.id, id));
   if (!updated) { res.status(404).json({ error: "Gallery not found" }); return; }
 
   res.json(toApiGallery(updated));

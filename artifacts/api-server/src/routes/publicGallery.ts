@@ -9,6 +9,10 @@ function isExpired(g: GalleryRow): boolean {
   return g.isRevoked || new Date(g.expiresAt) < new Date();
 }
 
+function toIso(d: Date | string): string {
+  return d instanceof Date ? d.toISOString() : String(d);
+}
+
 // GET /gallery/:token — public client access
 router.get("/gallery/:token", async (req, res) => {
   const token = req.params.token;
@@ -38,7 +42,7 @@ router.get("/gallery/:token", async (req, res) => {
     shootTitle: gallery.shootTitle,
     imageUrls: gallery.imageUrls ?? [],
     coverUrl: gallery.coverUrl ?? null,
-    expiresAt: gallery.expiresAt.toISOString(),
+    expiresAt: toIso(gallery.expiresAt),
     isExpired: false,
   });
 });

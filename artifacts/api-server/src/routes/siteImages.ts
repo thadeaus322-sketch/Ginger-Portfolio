@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, siteImagesTable } from "@workspace/db";
-import { eq, asc, inArray } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/auth.js";
 
 const router = Router();
@@ -39,7 +39,7 @@ router.post("/site-images", requireAdmin, async (req, res) => {
     return;
   }
 
-  const [row] = await db
+  const result = await db
     .insert(siteImagesTable)
     .values({
       section,
@@ -50,8 +50,11 @@ router.post("/site-images", requireAdmin, async (req, res) => {
       sortOrder: sortOrder ?? 0,
       tall: tall ?? false,
       isActive: isActive ?? true,
-    })
-    .returning();
+    });
+
+  // MySQL doesn't support .returning() — fetch by insertId
+  const insertId = (result[0] as any).insertId as number;
+  const [row] = await db.select().from(siteImagesTable).where(eq(siteImagesTable.id, insertId));
 
   res.status(201).json(toApi(row));
 });
@@ -76,7 +79,7 @@ router.post("/site-images/reorder", requireAdmin, async (req, res) => {
 
 // PATCH /site-images/:id — admin only
 router.patch("/site-images/:id", requireAdmin, async (req, res) => {
-  const id = parseInt(req.params.id ?? "", 10);
+  const id = parseInt(String(req.params.id ?? ""), 10);
   if (isNaN(id)) {
     res.status(400).json({ error: "Invalid id" });
     return;
@@ -103,12 +106,13 @@ router.patch("/site-images/:id", requireAdmin, async (req, res) => {
   if (tall !== undefined) updates.tall = tall;
   if (isActive !== undefined) updates.isActive = isActive;
 
-  const [updated] = await db
+  await db
     .update(siteImagesTable)
     .set(updates)
-    .where(eq(siteImagesTable.id, id))
-    .returning();
+    .where(eq(siteImagesTable.id, id));
 
+  // MySQL doesn't support .returning() — fetch after update
+  const [updated] = await db.select().from(siteImagesTable).where(eq(siteImagesTable.id, id));
   if (!updated) {
     res.status(404).json({ error: "Not found" });
     return;
@@ -119,7 +123,7 @@ router.patch("/site-images/:id", requireAdmin, async (req, res) => {
 
 // DELETE /site-images/:id — admin only
 router.delete("/site-images/:id", requireAdmin, async (req, res) => {
-  const id = parseInt(req.params.id ?? "", 10);
+  const id = parseInt(String(req.params.id ?? ""), 10);
   if (isNaN(id)) {
     res.status(400).json({ error: "Invalid id" });
     return;
@@ -139,7 +143,7 @@ function toApi(r: typeof siteImagesTable.$inferSelect) {
     sortOrder: r.sortOrder,
     tall: r.tall,
     isActive: r.isActive,
-    createdAt: r.createdAt.toISOString(),
+    createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
   };
 }
 

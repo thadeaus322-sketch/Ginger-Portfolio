@@ -3,3 +3,4 @@ artifacts/kafa[[:space:]]compressed.mp4 filter=lfs diff=lfs merge=lfs -text
 video/kafa[[:space:]]compressed.mp4 filter=lfs diff=lfs merge=lfs -text
 ginger-studios-export.zip filter=lfs diff=lfs merge=lfs -text
 deploy/ginger-studios-deploy.zip filter=lfs diff=lfs merge=lfs -text
+ginger-studios-deploy.zip filter=lfs diff=lfs merge=lfs -text

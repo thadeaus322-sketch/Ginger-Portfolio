@@ -1,127 +1,75 @@
 import {
-  pgTable,
-  serial,
+  mysqlTable,
+  int,
   text,
-  integer,
+  varchar,
   boolean,
   timestamp,
-  jsonb,
+  json,
   index,
   uniqueIndex,
-} from "drizzle-orm/pg-core";
+} from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
 // ─── Admin users ──────────────────────────────────────────────────────────────
-// Raw SQL equivalent:
-//
-//   CREATE TABLE admin_users (
-//     id            SERIAL PRIMARY KEY,
-//     email         TEXT NOT NULL,
-//     password_hash TEXT NOT NULL,
-//     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-//     CONSTRAINT admin_users_email_unique UNIQUE (email)
-//   );
-//
-export const adminUsersTable = pgTable(
+export const adminUsersTable = mysqlTable(
   "admin_users",
   {
-    id:           serial("id").primaryKey(),
-    email:        text("email").notNull().unique(),
+    id:           int("id").primaryKey().autoincrement(),
+    email:        varchar("email", { length: 255 }).notNull().unique(),
     passwordHash: text("password_hash").notNull(),
-    createdAt:    timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt:    timestamp("created_at").defaultNow().notNull(),
   },
   (t) => [
-    // Fast login lookup by email
     uniqueIndex("admin_users_email_idx").on(t.email),
   ]
 );
 
 // ─── Galleries ────────────────────────────────────────────────────────────────
-// Raw SQL equivalent:
-//
-//   CREATE TABLE galleries (
-//     id           SERIAL PRIMARY KEY,
-//     client_name  TEXT NOT NULL,
-//     shoot_title  TEXT NOT NULL,
-//     -- image_urls stores an ordered array of HTTPS URL strings.
-//     -- JSONB is chosen over a separate images table because:
-//     --   1. We always fetch all images together (no partial reads needed).
-//     --   2. Galleries contain 50-500 images — well within JSONB's sweet spot.
-//     --   3. Single-row fetch avoids a JOIN on every gallery view.
-//     --   4. GIN index is NOT added here because we never query inside the array;
-//     --      we only retrieve the full column, which uses the primary-key index.
-//     image_urls   JSONB NOT NULL DEFAULT '[]',
-//     cover_url    TEXT,
-//     notes        TEXT,
-//     -- accessToken is the only field used for public gallery lookups.
-//     -- The UNIQUE constraint creates an implicit B-tree index — O(log n) lookup.
-//     access_token TEXT NOT NULL,
-//     view_count   INTEGER NOT NULL DEFAULT 0,
-//     is_revoked   BOOLEAN NOT NULL DEFAULT FALSE,
-//     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-//     expires_at   TIMESTAMPTZ NOT NULL,
-//     CONSTRAINT galleries_access_token_unique UNIQUE (access_token)
-//   );
-//
-//   -- Speeds up dashboard queries that filter by status/expiry
-//   CREATE INDEX galleries_expires_at_idx  ON galleries (expires_at);
-//   CREATE INDEX galleries_is_revoked_idx  ON galleries (is_revoked);
-//   -- Composite index for the common "active, not-yet-expired" query
-//   CREATE INDEX galleries_status_idx ON galleries (is_revoked, expires_at);
-//
-export const galleriesTable = pgTable(
+export const galleriesTable = mysqlTable(
   "galleries",
   {
-    id:          serial("id").primaryKey(),
+    id:          int("id").primaryKey().autoincrement(),
     clientName:  text("client_name").notNull(),
     shootTitle:  text("shoot_title").notNull(),
     /**
-     * Stores an ordered array of image URL strings.
-     * JSONB is the right type here — see SQL comment above for reasoning.
-     * Each URL should point to a CDN-hosted image (e.g. Cloudinary, Supabase
-     * Storage, or any HTTPS endpoint) to keep the database lightweight and
-     * prevent page lag: the DB stores only the address, not the binary data.
+     * Stores an ordered array of image URL strings as JSON.
+     * Each URL should point to a hosted image (CDN or your uploads folder).
      */
-    imageUrls:   jsonb("image_urls").notNull().$type<string[]>().default([]),
+    imageUrls:   json("image_urls").notNull().$type<string[]>().default([]),
     coverUrl:    text("cover_url"),
     notes:       text("notes"),
-    accessToken: text("access_token").notNull().unique(),
-    viewCount:   integer("view_count").notNull().default(0),
+    accessToken: varchar("access_token", { length: 500 }).notNull().unique(),
+    viewCount:   int("view_count").notNull().default(0),
     isRevoked:   boolean("is_revoked").notNull().default(false),
-    createdAt:   timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    expiresAt:   timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt:   timestamp("created_at").defaultNow().notNull(),
+    expiresAt:   timestamp("expires_at").notNull(),
   },
   (t) => [
-    // Public gallery lookup — most critical query path
     uniqueIndex("galleries_access_token_idx").on(t.accessToken),
-    // Dashboard: filter/sort by expiry date
     index("galleries_expires_at_idx").on(t.expiresAt),
-    // Dashboard: filter by revocation status
     index("galleries_is_revoked_idx").on(t.isRevoked),
-    // Composite: the common "show active, not-yet-expired galleries" query
     index("galleries_status_composite_idx").on(t.isRevoked, t.expiresAt),
   ]
 );
 
 // ─── Site Images ──────────────────────────────────────────────────────────────
-// Stores manageable images for public-facing pages (homepage hero, photography portfolio).
 // section: "hero_slide" | "card_stack" | "portfolio"
-// category: for portfolio items — "weddings" | "portraits" | "events" | "food" | "products" | "birthday"
-//           for hero/card_stack — ignored / "all"
-export const siteImagesTable = pgTable(
+// category: "weddings" | "portraits" | "events" | "food" | "products" | "birthday" | "all"
+export const siteImagesTable = mysqlTable(
   "site_images",
   {
-    id:        serial("id").primaryKey(),
-    section:   text("section").notNull(),          // "hero_slide" | "card_stack" | "portfolio"
-    category:  text("category").notNull().default("all"), // portfolio category or "all"
+    id:        int("id").primaryKey().autoincrement(),
+    section:   varchar("section", { length: 100 }).notNull(),
+    category:  varchar("category", { length: 100 }).notNull().default("all"),
     title:     text("title").notNull().default(""),
-    label:     text("label").notNull().default(""), // hero/card label (e.g. "WEDDINGS")
+    label:     text("label").notNull().default(""),
     imageUrl:  text("image_url").notNull(),
-    sortOrder: integer("sort_order").notNull().default(0),
-    tall:      boolean("tall").notNull().default(false), // portfolio masonry: tall=3/4, wide=4/3
+    sortOrder: int("sort_order").notNull().default(0),
+    tall:      boolean("tall").notNull().default(false),
     isActive:  boolean("is_active").notNull().default(true),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => [
     index("site_images_section_idx").on(t.section),

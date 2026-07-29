@@ -76,7 +76,7 @@ router.put(
       res.status(404).json({ error: 'Not available in this storage mode' });
       return;
     }
-    const { uuid } = req.params;
+    const uuid = String(req.params.uuid ?? "");
     // Reject path traversal
     if (!/^[0-9a-f-]+$/i.test(uuid)) {
       res.status(400).json({ error: 'Invalid upload id' });
