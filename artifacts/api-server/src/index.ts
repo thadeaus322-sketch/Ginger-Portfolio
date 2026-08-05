@@ -1,3 +1,7 @@
+// Load .env file before anything else — critical for self-hosted deployments
+// where DATABASE_URL and other secrets are stored in a .env file on disk.
+import "dotenv/config";
+
 import app from "./app";
 import { logger } from "./lib/logger";
 
