@@ -3,7 +3,10 @@ import { Readable } from 'stream';
 import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
-import { File, Storage } from '@google-cloud/storage';
+// @google-cloud/storage is loaded dynamically — only in replit mode.
+// Using `import type` keeps TypeScript types without emitting a runtime import
+// that would crash on self-hosted servers where the package is not installed.
+import type { File, Storage } from '@google-cloud/storage';
 
 import {
   canAccessObject,
@@ -43,26 +46,36 @@ export function getLocalObjectPath(entityId: string): string {
 }
 
 // ─── GCS client (replit mode only) ───────────────────────────────────────────
-export const objectStorageClient: Storage | null =
-  STORAGE_MODE === 'replit'
-    ? new Storage({
-        credentials: {
-          audience: 'replit',
-          subject_token_type: 'access_token',
-          token_url: `${REPLIT_SIDECAR_ENDPOINT}/token`,
-          type: 'external_account',
-          credential_source: {
-            url: `${REPLIT_SIDECAR_ENDPOINT}/credential`,
-            format: {
-              type: 'json',
-              subject_token_field_name: 'access_token',
-            },
-          },
-          universe_domain: 'googleapis.com',
+// Lazily initialised so self-hosted servers never import @google-cloud/storage.
+let _gcsClient: Storage | null = null;
+
+async function getGCSClient(): Promise<Storage> {
+  if (_gcsClient) return _gcsClient;
+  // Dynamic import — only runs in replit mode, so the package only needs to be
+  // present in node_modules when actually running on Replit.
+  const { Storage: GCSStorage } = await import('@google-cloud/storage' as string as any);
+  _gcsClient = new GCSStorage({
+    credentials: {
+      audience: 'replit',
+      subject_token_type: 'access_token',
+      token_url: `${REPLIT_SIDECAR_ENDPOINT}/token`,
+      type: 'external_account',
+      credential_source: {
+        url: `${REPLIT_SIDECAR_ENDPOINT}/credential`,
+        format: {
+          type: 'json',
+          subject_token_field_name: 'access_token',
         },
-        projectId: '',
-      })
-    : null;
+      },
+      universe_domain: 'googleapis.com',
+    },
+    projectId: '',
+  }) as Storage;
+  return _gcsClient;
+}
+
+// Legacy sync export kept for compatibility — always null; callers should use getGCSClient().
+export const objectStorageClient: Storage | null = null;
 
 export class ObjectNotFoundError extends Error {
   constructor() {
@@ -112,11 +125,11 @@ export class ObjectStorageService {
   }
 
   async searchPublicObject(filePath: string): Promise<File | null> {
-    if (!objectStorageClient) throw new Error('GCS not available in local mode');
+    const gcs = await getGCSClient();
     for (const searchPath of this.getPublicObjectSearchPaths()) {
       const fullPath = `${searchPath}/${filePath}`;
       const { bucketName, objectName } = parseObjectPath(fullPath);
-      const bucket = objectStorageClient.bucket(bucketName);
+      const bucket = gcs.bucket(bucketName);
       const file = bucket.file(objectName);
       const [exists] = await file.exists();
       if (exists) return file;
@@ -180,7 +193,6 @@ export class ObjectStorageService {
   }
 
   async getObjectEntityFile(objectPath: string): Promise<File> {
-    if (!objectStorageClient) throw new Error('GCS not available in local mode');
     if (!objectPath.startsWith('/objects/')) throw new ObjectNotFoundError();
     const parts = objectPath.slice(1).split('/');
     if (parts.length < 2) throw new ObjectNotFoundError();
@@ -189,7 +201,8 @@ export class ObjectStorageService {
     if (!entityDir.endsWith('/')) entityDir = `${entityDir}/`;
     const objectEntityPath = `${entityDir}${entityId}`;
     const { bucketName, objectName } = parseObjectPath(objectEntityPath);
-    const bucket = objectStorageClient.bucket(bucketName);
+    const gcs = await getGCSClient();
+    const bucket = gcs.bucket(bucketName);
     const objectFile = bucket.file(objectName);
     const [exists] = await objectFile.exists();
     if (!exists) throw new ObjectNotFoundError();
