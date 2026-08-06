@@ -70,4 +70,4 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- Change this immediately after first login via Admin → Settings
 -- ============================================================
 -- INSERT INTO `admin_users` (`email`, `password_hash`) VALUES
--- ('admin@gingerstudios.com', 'afc30d616ab1a3a18c64e90c2f2d77c3aa2b0e396e2c55b37e80d1d09d3e5b2f');
+-- ('admin@gingerstudios.com', 'f332fe25fa2eecfc3e58d7fa337f918b5d3fabe9ec9379a5149f17d9e74c3174');
