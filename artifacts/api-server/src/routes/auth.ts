@@ -39,12 +39,17 @@ router.post("/auth/login", async (req, res) => {
   }
 
   const token = signToken(email);
-  const isProduction = process.env.NODE_ENV === "production";
+  // Use HTTPS-aware check: secure cookies only when the connection is actually
+  // over HTTPS (works correctly behind Nginx/cPanel reverse proxies too).
+  const isHttps =
+    req.secure ||
+    req.headers["x-forwarded-proto"] === "https" ||
+    (req.headers["x-forwarded-proto"] as string)?.split(",")[0].trim() === "https";
 
   res.cookie(TOKEN_COOKIE, token, {
     httpOnly: true,
-    sameSite: isProduction ? "strict" : "lax",
-    secure: isProduction,
+    sameSite: "lax",
+    secure: isHttps,
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: "/",
   });
