@@ -26,3 +26,10 @@ uri = "file://deploy/ginger-server-dist-update.zip"
 type = "unspecified"
 title = "Ginger Studios server auth fix"
 description = "Rebuilt Harmon-ready server bundle with the repaired admin login fallback, credential recovery switch, safer diagnostics, and corrected default password hash."
+
+[[outputs]]
+id = "MijfQkOMFH4d6f6GT_ftg"
+uri = "file://deploy/admin-recovery.mysql.sql"
+type = "unspecified"
+title = "Admin recovery SQL file"
+description = "Safe MySQL recovery script for phpMyAdmin. It creates or resets only the admin_users table and seeds the default admin login."
