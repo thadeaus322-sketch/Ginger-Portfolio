@@ -27,3 +27,16 @@ never be reached.
 **How to apply:** Verify `/home/<account>/public_html/ginger/server/dist/index.mjs`
 exists after extraction, then restart the Node application and inspect only the
 fresh log from that restart.
+
+The Harmon startup-file setting must reference the compiled file, not the `dist`
+directory. A startup target ending in `/server//dist` makes LiteSpeed's launcher
+call `require()` on the directory and fail with `MODULE_NOT_FOUND` before the
+application starts.
+
+**Why:** A later hosted log showed the launcher resolving
+`/home/gvscomng/public_html/ginger/server//dist`, proving the configured startup
+target was the directory rather than `dist/index.mjs`.
+
+**How to apply:** Set Application root to `public_html/ginger/server` and Startup
+file to `dist/index.mjs`, then restart. Verify that the extracted file exists at
+that exact path.
