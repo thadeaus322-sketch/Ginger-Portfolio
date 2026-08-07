@@ -33,3 +33,10 @@ uri = "file://deploy/admin-recovery.mysql.sql"
 type = "unspecified"
 title = "Admin recovery SQL file"
 description = "Safe MySQL recovery script for phpMyAdmin. It creates or resets only the admin_users table and seeds the default admin login."
+
+[[outputs]]
+id = "vTYKxQ17AADgkh28p-QqX"
+uri = "file://deploy/ginger-server-runtime-update.zip"
+type = "unspecified"
+title = "Ginger Studios runtime update"
+description = "Harmon-ready server update containing the repaired dist files and package.json required to install mysql2."
