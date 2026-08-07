@@ -15,3 +15,15 @@ actual default password hash.
 **How to apply:** Keep database credentials as the normal source. For recovery,
 configure matching `ADMIN_EMAIL` and `ADMIN_PASSWORD_HASH`, temporarily set the
 source to `env`, restart the host app, then switch back to database-backed login.
+
+Harmon/cPanel must run the compiled bundle from an application root of
+`public_html/ginger/server` with startup file `dist/index.mjs`; uploading source
+files alone does not change the hosted runtime.
+
+**Why:** Hosted logs can contain entries from several failed restarts, including an
+old PORT check and a missing compiled bundle, so a correct auth source change may
+never be reached.
+
+**How to apply:** Verify `/home/<account>/public_html/ginger/server/dist/index.mjs`
+exists after extraction, then restart the Node application and inspect only the
+fresh log from that restart.
