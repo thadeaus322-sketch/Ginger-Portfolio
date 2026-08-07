@@ -1,0 +1,59 @@
+ at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:39592:20)
+    at async getEffectiveCredentials (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:51378:17)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:51390:66
+Error: Failed query: select `id`, `email`, `password_hash`, `created_at` from `admin_users` limit ?
+params: 1
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:39416:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:39592:20)
+    at async getEffectiveCredentials (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:51378:17)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:51390:66
+Error: Failed query: select `id`, `email`, `password_hash`, `created_at` from `admin_users` limit ?
+params: 1
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:39416:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:39592:20)
+    at async getEffectiveCredentials (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:51378:17)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:51390:66
+Error: Failed query: select `id`, `email`, `password_hash`, `created_at` from `admin_users` limit ?
+params: 1
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:39416:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:39592:20)
+    at async getEffectiveCredentials (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:51378:17)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:51390:66
+Error: Failed query: select `id`, `email`, `password_hash`, `created_at` from `admin_users` limit ?
+params: 1
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:39416:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:39592:20)
+    at async getEffectiveCredentials (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:51378:17)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:51390:66
+Error: Failed query: select `id`, `email`, `password_hash`, `created_at` from `admin_users` limit ?
+params: 1
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:39416:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:39592:20)
+    at async getEffectiveCredentials (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:51378:17)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:51390:66
+Error: Failed query: select `id`, `email`, `password_hash`, `created_at` from `admin_users` limit ?
+params: 1
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:39416:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:39592:20)
+    at async getEffectiveCredentials (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:51378:17)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:51390:66
+Error: Failed query: select `id`, `email`, `password_hash`, `created_at` from `admin_users` limit ?
+params: 1
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:39416:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:39592:20)
+    at async getEffectiveCredentials (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:51378:17)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:51390:66
+Error: Failed query: select `id`, `email`, `password_hash`, `created_at` from `admin_users` limit ?
+params: 1
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:39416:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:39592:20)
+    at async getEffectiveCredentials (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:51378:17)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:51390:66

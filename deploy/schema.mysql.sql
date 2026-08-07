@@ -65,9 +65,9 @@ CREATE TABLE `site_images` (
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
--- OPTIONAL: Seed a default admin user
+-- Seed a default admin user
 -- Password below is SHA256 of "GingerStudios2026!"
 -- Change this immediately after first login via Admin → Settings
 -- ============================================================
--- INSERT INTO `admin_users` (`email`, `password_hash`) VALUES
--- ('admin@gingerstudios.com', 'f332fe25fa2eecfc3e58d7fa337f918b5d3fabe9ec9379a5149f17d9e74c3174');
+INSERT INTO `admin_users` (`email`, `password_hash`) VALUES
+('admin@gingerstudios.com', 'f332fe25fa2eecfc3e58d7fa337f918b5d3fabe9ec9379a5149f17d9e74c3174');

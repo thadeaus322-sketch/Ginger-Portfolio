@@ -8,16 +8,45 @@ import {
   TOKEN_COOKIE,
 } from "../lib/auth.js";
 import { requireAdmin, type AuthedRequest } from "../middlewares/auth.js";
+import { logger } from "../lib/logger.js";
 
 const router = Router();
 
-// ─── Helpers: resolve effective credentials (DB overrides env vars) ───────────
+type EffectiveCredentials = {
+  email: string;
+  passwordHash: string;
+  usingDefaults: boolean;
+};
 
-async function getEffectiveCredentials(): Promise<{ email: string; passwordHash: string; usingDefaults: boolean }> {
-  const [row] = await db.select().from(adminUsersTable).limit(1);
-  if (row) {
-    return { email: row.email, passwordHash: row.passwordHash, usingDefaults: false };
+const normalizeEmail = (email: string): string => email.trim().toLowerCase();
+
+const shouldUseEnvironmentCredentials =
+  process.env.AUTH_CREDENTIALS_SOURCE?.trim().toLowerCase() === "env";
+
+// ─── Helpers: resolve effective credentials ────────────────────────────────────
+//
+// Database credentials remain the normal source after an admin changes them.
+// AUTH_CREDENTIALS_SOURCE=env is an intentional recovery switch for a host
+// where the admin row is stale or the admin_users table is unavailable.
+async function getEffectiveCredentials(): Promise<EffectiveCredentials> {
+  if (shouldUseEnvironmentCredentials) {
+    return { email: ADMIN_EMAIL, passwordHash: ADMIN_PASSWORD_HASH, usingDefaults: true };
   }
+
+  try {
+    const [row] = await db.select().from(adminUsersTable).limit(1);
+    if (row) {
+      return { email: row.email, passwordHash: row.passwordHash, usingDefaults: false };
+    }
+  } catch (error) {
+    // Keep login available during a database/schema outage, but leave a useful
+    // server-side diagnostic instead of silently hiding the root cause.
+    logger.warn(
+      { error: error instanceof Error ? error.message : "Unknown database error" },
+      "Admin credential lookup failed; using environment credentials",
+    );
+  }
+
   return { email: ADMIN_EMAIL, passwordHash: ADMIN_PASSWORD_HASH, usingDefaults: true };
 }
 
@@ -33,12 +62,15 @@ router.post("/auth/login", async (req, res) => {
 
   const { email: effectiveEmail, passwordHash: effectiveHash } = await getEffectiveCredentials();
 
-  if (email !== effectiveEmail || hashPassword(password) !== effectiveHash) {
+  if (
+    normalizeEmail(email) !== normalizeEmail(effectiveEmail) ||
+    hashPassword(password) !== effectiveHash
+  ) {
     res.status(401).json({ error: "Invalid credentials" });
     return;
   }
 
-  const token = signToken(email);
+  const token = signToken(effectiveEmail);
   // Use HTTPS-aware check: secure cookies only when the connection is actually
   // over HTTPS (works correctly behind Nginx/cPanel reverse proxies too).
   const isHttps =
@@ -54,7 +86,7 @@ router.post("/auth/login", async (req, res) => {
     path: "/",
   });
 
-  res.json({ id: 1, email });
+  res.json({ id: 1, email: effectiveEmail });
 });
 
 router.post("/auth/logout", (_req, res) => {

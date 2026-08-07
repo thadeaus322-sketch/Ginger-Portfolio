@@ -98,6 +98,7 @@ Still inside **Setup Node.js App**, find the **Environment Variables** section a
 | `SESSION_SECRET` | A long random string — see below to generate one |
 | `ADMIN_EMAIL` | `admin@yourdomain.com` |
 | `ADMIN_PASSWORD_HASH` | SHA-256 hash of your admin password — see below |
+| `AUTH_CREDENTIALS_SOURCE` | Leave unset for normal database-backed login; set to `env` only for recovery |
 | `STORAGE_MODE` | `local` |
 | `UPLOADS_DIR` | `/home/youraccount/public_html/ginger/uploads` (absolute path) |
 | `NODE_ENV` | `production` |
@@ -119,7 +120,7 @@ Your admin password is stored as a SHA-256 hash. To generate it:
 3. Copy the Output — that's your `ADMIN_PASSWORD_HASH`
 
 **Default password** (change this!): `GingerStudios2026!`
-**Its hash** (copy if keeping the default): `afc30d616ab1a3a18c64e90c2f2d77c3aa2b0e396e2c55b37e80d1d09d3e5b2f`
+**Its hash** (copy if keeping the default): `f332fe25fa2eecfc3e58d7fa337f918b5d3fabe9ec9379a5149f17d9e74c3174`
 
 ---
 
@@ -189,7 +190,7 @@ If you need to deploy an updated version:
 | White screen / nothing loads | Make sure Application startup file is `dist/index.mjs` |
 | Database connection error | Verify MySQL username/password/database name in `DATABASE_URL` |
 | Upload fails | Check `UPLOADS_DIR` is set to the correct absolute path and folder is writable |
-| Admin login fails | Verify `ADMIN_EMAIL` and `ADMIN_PASSWORD_HASH` match your chosen credentials |
+| Admin login fails | Verify `ADMIN_EMAIL` and `ADMIN_PASSWORD_HASH` match your chosen credentials; the hash must be SHA-256 of the exact password |
 | "Cannot find module mysql2" | Run NPM Install again in Setup Node.js App |
 
 ### Finding the Absolute Path for UPLOADS_DIR
@@ -201,6 +202,25 @@ echo ~/public_html/ginger/uploads
 Copy the output — that's your `UPLOADS_DIR`.
 
 ---
+
+## Recovering access when the database admin row is wrong
+
+If the server log contains `select ... from admin_users` and login still returns
+`Invalid credentials`, the database may contain an old admin email/password.
+Temporarily add `AUTH_CREDENTIALS_SOURCE=env` in Setup Node.js App, make sure
+`ADMIN_EMAIL` and `ADMIN_PASSWORD_HASH` match the credentials you want, and
+restart the application. This bypasses the admin row for login only.
+
+After logging in, go to **Admin → Settings** and save the credentials. Then
+remove `AUTH_CREDENTIALS_SOURCE` (or set it back to `database`) and restart.
+The normal database-backed login will then be used.
+
+If the `admin_users` table does not exist, import
+`deploy/admin-recovery.mysql.sql` in phpMyAdmin. It creates only the
+`admin_users` table, resets only admin accounts, and seeds the default account.
+It does not touch galleries, site images, or uploads. Do not import the full
+`schema.mysql.sql` into a live database unless you intend to recreate all
+application tables.
 
 ## Your DATABASE_URL Format
 

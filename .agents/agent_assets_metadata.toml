@@ -24,5 +24,5 @@ description = "Fixed — PORT now defaults to 3000 if cPanel doesn't pass it. Da
 id = "9r13W_f2glrZkJPC_vp6v"
 uri = "file://deploy/ginger-server-dist-update.zip"
 type = "unspecified"
-title = "Ginger Server Update"
-description = "Upload this to your Harmon server and extract it to replace the dist/ folder, then restart your Node.js app."
+title = "Ginger Studios server auth fix"
+description = "Rebuilt Harmon-ready server bundle with the repaired admin login fallback, credential recovery switch, safer diagnostics, and corrected default password hash."
