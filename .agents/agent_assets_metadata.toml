@@ -40,3 +40,10 @@ uri = "file://deploy/ginger-server-runtime-update.zip"
 type = "unspecified"
 title = "Ginger Studios runtime update"
 description = "Harmon-ready server update containing the repaired dist files and package.json required to install mysql2."
+
+[[outputs]]
+id = "72BBr0SiJhqh5i56AN_8i"
+uri = "file://deploy/ginger-server-runtime-bundled-update.zip"
+type = "unspecified"
+title = "Ginger Studios bundled runtime update"
+description = "Replacement Harmon upload package. The server bundle includes mysql2, so it does not require Harmon to resolve mysql2 from node_modules at startup."
