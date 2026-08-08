@@ -16,12 +16,26 @@ type EffectiveCredentials = {
   email: string;
   passwordHash: string;
   usingDefaults: boolean;
+  source: "env" | "database" | "fallback-env";
 };
 
 const normalizeEmail = (email: string): string => email.trim().toLowerCase();
 
 const shouldUseEnvironmentCredentials =
   process.env.AUTH_CREDENTIALS_SOURCE?.trim().toLowerCase() === "env";
+const shouldLogAuthDiagnostics =
+  process.env.AUTH_DEBUG?.trim().toLowerCase() === "1" ||
+  process.env.AUTH_DEBUG?.trim().toLowerCase() === "true";
+
+function getEnvironmentCredentials(): Pick<EffectiveCredentials, "email" | "passwordHash"> {
+  // An explicitly supplied ADMIN_PASSWORD takes precedence over a stale hash.
+  // This is only used when environment credentials are selected for recovery.
+  const passwordHash = process.env.ADMIN_PASSWORD
+    ? hashPassword(process.env.ADMIN_PASSWORD)
+    : ADMIN_PASSWORD_HASH;
+
+  return { email: ADMIN_EMAIL, passwordHash };
+}
 
 // ─── Helpers: resolve effective credentials ────────────────────────────────────
 //
@@ -30,13 +44,13 @@ const shouldUseEnvironmentCredentials =
 // where the admin row is stale or the admin_users table is unavailable.
 async function getEffectiveCredentials(): Promise<EffectiveCredentials> {
   if (shouldUseEnvironmentCredentials) {
-    return { email: ADMIN_EMAIL, passwordHash: ADMIN_PASSWORD_HASH, usingDefaults: true };
+    return { ...getEnvironmentCredentials(), usingDefaults: true, source: "env" };
   }
 
   try {
     const [row] = await db.select().from(adminUsersTable).limit(1);
     if (row) {
-      return { email: row.email, passwordHash: row.passwordHash, usingDefaults: false };
+      return { email: row.email, passwordHash: row.passwordHash, usingDefaults: false, source: "database" };
     }
   } catch (error) {
     // Keep login available during a database/schema outage, but leave a useful
@@ -45,9 +59,10 @@ async function getEffectiveCredentials(): Promise<EffectiveCredentials> {
       { error: error instanceof Error ? error.message : "Unknown database error" },
       "Admin credential lookup failed; using environment credentials",
     );
+    return { ...getEnvironmentCredentials(), usingDefaults: true, source: "fallback-env" };
   }
 
-  return { email: ADMIN_EMAIL, passwordHash: ADMIN_PASSWORD_HASH, usingDefaults: true };
+  return { ...getEnvironmentCredentials(), usingDefaults: true, source: "fallback-env" };
 }
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
@@ -60,12 +75,29 @@ router.post("/auth/login", async (req, res) => {
     return;
   }
 
-  const { email: effectiveEmail, passwordHash: effectiveHash } = await getEffectiveCredentials();
+  const {
+    email: effectiveEmail,
+    passwordHash: effectiveHash,
+    source,
+  } = await getEffectiveCredentials();
+  const emailMatches = normalizeEmail(email) === normalizeEmail(effectiveEmail);
+  const passwordMatches = hashPassword(password) === effectiveHash;
 
-  if (
-    normalizeEmail(email) !== normalizeEmail(effectiveEmail) ||
-    hashPassword(password) !== effectiveHash
-  ) {
+  if (!emailMatches || !passwordMatches) {
+    if (shouldLogAuthDiagnostics) {
+      logger.warn(
+        {
+          authSource: source,
+          submittedEmail: normalizeEmail(email),
+          configuredEmail: normalizeEmail(effectiveEmail),
+          emailMatches,
+          passwordMatches,
+          submittedPasswordLength: password.length,
+          configuredHashLength: effectiveHash.length,
+        },
+        "Admin login rejected (safe diagnostics)",
+      );
+    }
     res.status(401).json({ error: "Invalid credentials" });
     return;
   }

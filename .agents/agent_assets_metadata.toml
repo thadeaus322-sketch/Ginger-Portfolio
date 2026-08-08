@@ -47,3 +47,10 @@ uri = "file://deploy/ginger-server-runtime-bundled-update.zip"
 type = "unspecified"
 title = "Ginger Studios latest bundled server"
 description = "Latest Harmon upload bundle with the repaired dist/index.mjs and mysql2 embedded in the server bundle."
+
+[[outputs]]
+id = "4V18L38B4PmVveDGHbNpj"
+uri = "file://deploy/ginger-server-auth-diagnostic-update.zip"
+type = "unspecified"
+title = "Ginger Studios authentication diagnostic update"
+description = "Latest Harmon bundle with embedded mysql2, deterministic environment-password recovery, and safe opt-in login diagnostics."
