@@ -54,3 +54,10 @@ uri = "file://deploy/ginger-server-auth-diagnostic-update.zip"
 type = "unspecified"
 title = "Ginger Studios authentication diagnostic update"
 description = "Latest Harmon bundle with embedded mysql2, deterministic environment-password recovery, and safe opt-in login diagnostics."
+
+[[outputs]]
+id = "pe2DTR4Bf-_D2N-n6lFTU"
+uri = "file://deploy/schema.mysql-safe-init.sql"
+type = "unspecified"
+title = "Ginger Studios safe database initializer"
+description = "Non-destructive MySQL script that creates missing admin_users, galleries, and site_images tables without dropping or deleting existing data."

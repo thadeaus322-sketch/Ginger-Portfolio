@@ -1,0 +1,66 @@
+Error: Failed query: select `id`, `client_name`, `shoot_title`, `image_urls`, `cover_url`, `notes`, `access_token`, `view_count`, `is_revoked`, `created_at`, `expires_at` from `galleries` order by `galleries`.`created_at` desc
+params: 
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55388:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55564:20)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:67507:16
+Error: Failed query: select `id`, `client_name`, `shoot_title`, `image_urls`, `cover_url`, `notes`, `access_token`, `view_count`, `is_revoked`, `created_at`, `expires_at` from `galleries` order by `galleries`.`created_at` desc
+params: 
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55388:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55564:20)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:67530:16
+Error: Failed query: select `id`, `client_name`, `shoot_title`, `image_urls`, `cover_url`, `notes`, `access_token`, `view_count`, `is_revoked`, `created_at`, `expires_at` from `galleries` order by `galleries`.`created_at` desc
+params: 
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55388:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55564:20)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:67507:16
+Error: Failed query: select `id`, `client_name`, `shoot_title`, `image_urls`, `cover_url`, `notes`, `access_token`, `view_count`, `is_revoked`, `created_at`, `expires_at` from `galleries` order by `galleries`.`created_at` desc
+params: 
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55388:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55564:20)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:67530:16
+Error: Failed query: select `id`, `client_name`, `shoot_title`, `image_urls`, `cover_url`, `notes`, `access_token`, `view_count`, `is_revoked`, `created_at`, `expires_at` from `galleries` order by `galleries`.`created_at` desc
+params: 
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55388:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55564:20)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:67507:16
+Error: Failed query: select `id`, `client_name`, `shoot_title`, `image_urls`, `cover_url`, `notes`, `access_token`, `view_count`, `is_revoked`, `created_at`, `expires_at` from `galleries` order by `galleries`.`created_at` desc
+params: 
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55388:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55564:20)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:67530:16
+Error: Failed query: select `id`, `client_name`, `shoot_title`, `image_urls`, `cover_url`, `notes`, `access_token`, `view_count`, `is_revoked`, `created_at`, `expires_at` from `galleries` order by `galleries`.`created_at` desc
+params: 
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55388:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55564:20)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:67507:16
+Error: Failed query: select `id`, `client_name`, `shoot_title`, `image_urls`, `cover_url`, `notes`, `access_token`, `view_count`, `is_revoked`, `created_at`, `expires_at` from `galleries` order by `galleries`.`created_at` desc
+params: 
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55388:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55564:20)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:67530:16
+Error: Failed query: select `id`, `section`, `category`, `title`, `label`, `image_url`, `sort_order`, `tall`, `is_active`, `created_at` from `site_images` where `site_images`.`is_active` = ? order by `site_images`.`sort_order` asc
+params: true
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55388:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55564:20)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:68111:14
+Error: Failed query: select `id`, `section`, `category`, `title`, `label`, `image_url`, `sort_order`, `tall`, `is_active`, `created_at` from `site_images` where `site_images`.`is_active` = ? order by `site_images`.`sort_order` asc
+params: true
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55388:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55564:20)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:68111:14
+Error: Failed query: select `id`, `section`, `category`, `title`, `label`, `image_url`, `sort_order`, `tall`, `is_active`, `created_at` from `site_images` where `site_images`.`is_active` = ? order by `site_images`.`sort_order` asc
+params: true
+    at MySql2PreparedQuery.queryWithCache (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55388:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MySql2PreparedQuery.execute (file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:55564:20)
+    at async file:///home/gvscomng/public_html/ginger/server/dist/index.mjs:68111:14
