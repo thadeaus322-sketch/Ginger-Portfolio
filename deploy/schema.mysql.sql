@@ -27,7 +27,7 @@ CREATE TABLE `galleries` (
   `id`            INT          NOT NULL AUTO_INCREMENT,
   `client_name`   TEXT         NOT NULL,
   `shoot_title`   TEXT         NOT NULL,
-  `image_urls`    JSON         NOT NULL DEFAULT (JSON_ARRAY()),
+  `image_urls`    JSON         NOT NULL,
   `cover_url`     TEXT         DEFAULT NULL,
   `notes`         TEXT         DEFAULT NULL,
   `access_token`  VARCHAR(500) NOT NULL,
@@ -50,8 +50,10 @@ CREATE TABLE `site_images` (
   `id`          INT          NOT NULL AUTO_INCREMENT,
   `section`     VARCHAR(100) NOT NULL,
   `category`    VARCHAR(100) NOT NULL DEFAULT 'all',
-  `title`       TEXT         NOT NULL DEFAULT '',
-  `label`       TEXT         NOT NULL DEFAULT '',
+  -- Keep metadata columns on VARCHAR rather than TEXT so this works on
+  -- older MySQL/MariaDB versions that reject defaults on TEXT columns.
+  `title`       VARCHAR(1000) NOT NULL DEFAULT '',
+  `label`       VARCHAR(255)  NOT NULL DEFAULT '',
   `image_url`   TEXT         NOT NULL,
   `sort_order`  INT          NOT NULL DEFAULT 0,
   `tall`        TINYINT(1)   NOT NULL DEFAULT 0,

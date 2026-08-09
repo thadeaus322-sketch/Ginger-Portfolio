@@ -40,8 +40,9 @@ CREATE TABLE IF NOT EXISTS `site_images` (
   `id`          INT          NOT NULL AUTO_INCREMENT,
   `section`     VARCHAR(100) NOT NULL,
   `category`    VARCHAR(100) NOT NULL DEFAULT 'all',
-  `title`       TEXT         NOT NULL,
-  `label`       TEXT         NOT NULL,
+  -- VARCHAR keeps this compatible with older MySQL/MariaDB versions.
+  `title`       VARCHAR(1000) NOT NULL DEFAULT '',
+  `label`       VARCHAR(255)  NOT NULL DEFAULT '',
   `image_url`   TEXT         NOT NULL,
   `sort_order`  INT          NOT NULL DEFAULT 0,
   `tall`        TINYINT(1)   NOT NULL DEFAULT 0,

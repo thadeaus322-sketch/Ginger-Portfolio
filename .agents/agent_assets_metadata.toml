@@ -61,3 +61,17 @@ uri = "file://deploy/schema.mysql-safe-init.sql"
 type = "unspecified"
 title = "Ginger Studios safe database initializer"
 description = "Non-destructive MySQL script that creates missing admin_users, galleries, and site_images tables without dropping or deleting existing data."
+
+[[outputs]]
+id = "HyjmynAXC6cD13m6jJWRn"
+uri = "file://deploy/ginger-server-site-images-fix.zip"
+type = "unspecified"
+title = "Ginger Studios Harmon update"
+description = "Fresh compiled server and frontend update with the non-destructive MySQL migration included."
+
+[[outputs]]
+id = "2e5bMzokJdHknaKutqMF3"
+uri = "file://deploy/site-images-migration.mysql.sql"
+type = "unspecified"
+title = "Harmon MySQL repair migration"
+description = "Creates missing admin_users, galleries, and site_images tables without dropping existing data."

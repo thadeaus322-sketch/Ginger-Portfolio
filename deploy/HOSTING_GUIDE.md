@@ -179,6 +179,10 @@ chmod 755 ~/public_html/ginger/uploads
 If you need to deploy an updated version:
 1. Replace files in `server/dist/` and `server/public/` via File Manager
 2. Click **Restart** in Setup Node.js App
+3. If the database schema changed, import the matching non-destructive
+   migration from the `database/` folder. Do not import the full
+   `schema.mysql.sql` into a live database unless you intend to recreate all
+   application tables.
 
 ---
 
@@ -190,6 +194,7 @@ If you need to deploy an updated version:
 | White screen / nothing loads | Make sure Application startup file is `dist/index.mjs` |
 | Database connection error | Verify MySQL username/password/database name in `DATABASE_URL` |
 | Upload fails | Check `UPLOADS_DIR` is set to the correct absolute path and folder is writable |
+| `site_images` or `galleries` query fails | In phpMyAdmin, select the database named in `DATABASE_URL`, import `site-images-migration.mysql.sql`, then restart the Node app |
 | Admin login fails | Verify `ADMIN_EMAIL` and `ADMIN_PASSWORD_HASH` match your chosen credentials; the hash must be SHA-256 of the exact password |
 | "Cannot find module mysql2" | Run NPM Install again in Setup Node.js App |
 
@@ -221,6 +226,30 @@ If the `admin_users` table does not exist, import
 It does not touch galleries, site images, or uploads. Do not import the full
 `schema.mysql.sql` into a live database unless you intend to recreate all
 application tables.
+
+### Fixing the `site_images` query error
+
+If the admin dashboard shows an error like:
+
+```text
+Failed query: select ... from `site_images` ...
+```
+
+the running app is connected to a MySQL database that does not contain the
+current application tables. This is a database initialization issue, not an
+image-file issue.
+
+1. Open the `.env` used by the Harmon Node application and note the database
+   name at the end of `DATABASE_URL`.
+2. In phpMyAdmin, select that exact database.
+3. Import `site-images-migration.mysql.sql` from this package. It uses
+   `CREATE TABLE IF NOT EXISTS`, so existing admin accounts, galleries, and
+   uploaded-file records are preserved.
+4. Restart the Node application in Harmon.
+5. Reload `/admin/site-images` and upload a small image.
+
+The SQL uses `VARCHAR` for image metadata instead of `TEXT DEFAULT`, which
+avoids a common incompatibility on older MySQL/MariaDB versions.
 
 ## Your DATABASE_URL Format
 
