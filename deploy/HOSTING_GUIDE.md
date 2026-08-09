@@ -194,7 +194,7 @@ If you need to deploy an updated version:
 | White screen / nothing loads | Make sure Application startup file is `dist/index.mjs` |
 | Database connection error | Verify MySQL username/password/database name in `DATABASE_URL` |
 | Upload fails | Check `UPLOADS_DIR` is set to the correct absolute path and folder is writable |
-| `site_images` or `galleries` query fails | In phpMyAdmin, select the database named in `DATABASE_URL`, import `site-images-migration.mysql.sql`, then restart the Node app |
+| `site_images` query fails | In phpMyAdmin, select the database named in `DATABASE_URL`, import `site-images-only.mysql.sql`, then restart the Node app |
 | Admin login fails | Verify `ADMIN_EMAIL` and `ADMIN_PASSWORD_HASH` match your chosen credentials; the hash must be SHA-256 of the exact password |
 | "Cannot find module mysql2" | Run NPM Install again in Setup Node.js App |
 
@@ -242,9 +242,9 @@ image-file issue.
 1. Open the `.env` used by the Harmon Node application and note the database
    name at the end of `DATABASE_URL`.
 2. In phpMyAdmin, select that exact database.
-3. Import `site-images-migration.mysql.sql` from this package. It uses
-   `CREATE TABLE IF NOT EXISTS`, so existing admin accounts, galleries, and
-   uploaded-file records are preserved.
+3. Import `site-images-only.mysql.sql` from this package. It uses
+   `CREATE TABLE IF NOT EXISTS` and touches only `site_images`; it does not
+   touch admin accounts, galleries, or uploaded-file records.
 4. Restart the Node application in Harmon.
 5. Reload `/admin/site-images` and upload a small image.
 
