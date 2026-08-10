@@ -165,9 +165,11 @@ export class ObjectStorageService {
     const objectId = randomUUID();
 
     if (STORAGE_MODE === 'local') {
-      // Browser will PUT directly to our own API
-      const host = baseUrl ?? '';
-      const uploadURL = `${host}/api/storage/uploads/local/${objectId}`;
+      // Use a same-origin relative URL for self-hosted uploads. Building an
+      // absolute URL from req.protocol is unreliable behind HTTPS reverse
+      // proxies (it can produce http:// and trigger mixed-content blocking).
+      // The browser will PUT directly to our own API on the current origin.
+      const uploadURL = `/api/storage/uploads/local/${objectId}`;
       const objectPath = `/objects/uploads/${objectId}`;
       return { uploadURL, objectPath };
     }
