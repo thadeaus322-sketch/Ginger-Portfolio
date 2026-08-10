@@ -7,8 +7,10 @@ import type { GalleryRow } from "@workspace/db";
 
 const router = Router();
 
-// All gallery admin routes require auth
-router.use(requireAdmin);
+// Only gallery-management routes require auth. Do not install auth at the
+// router root: this router is mounted before public routers, and a root
+// middleware would also block unrelated public endpoints.
+router.use("/galleries", requireAdmin);
 
 function computeStatus(g: GalleryRow): "active" | "expiring_soon" | "expired" | "revoked" {
   if (g.isRevoked) return "revoked";

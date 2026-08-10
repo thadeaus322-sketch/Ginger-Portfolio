@@ -75,3 +75,10 @@ uri = "file://deploy/site-images-migration.mysql.sql"
 type = "unspecified"
 title = "Harmon MySQL repair migration"
 description = "Creates missing admin_users, galleries, and site_images tables without dropping existing data."
+
+[[outputs]]
+id = "22IbS1shJOuSgnd1yitqb"
+uri = "file://deploy/ginger-server-route-fix.zip"
+type = "unspecified"
+title = "Ginger Studios server route fix"
+description = "Backend-only update. Replaces the stale route middleware and preserves the database, uploads, and frontend."

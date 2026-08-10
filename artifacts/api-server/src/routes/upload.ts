@@ -3,7 +3,9 @@ import { requireAdmin } from "../middlewares/auth.js";
 
 const router = Router();
 
-router.use(requireAdmin);
+// Scope authentication to upload-registration routes only. A router-root
+// middleware would block public routes mounted after this router.
+router.use("/upload", requireAdmin);
 
 // POST /upload/complete — register already-uploaded URLs
 router.post("/upload/complete", (req, res) => {

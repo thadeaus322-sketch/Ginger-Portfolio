@@ -184,6 +184,15 @@ If you need to deploy an updated version:
    `schema.mysql.sql` into a live database unless you intend to recreate all
    application tables.
 
+### Important: deploy the server bundle after a code fix
+
+Harmon runs the compiled files in `server/dist/`, not the TypeScript source
+files. If you only change or upload source files, the hosted app continues to
+run the old code. For the public site-images/auth middleware fix, replace the
+contents of `server/dist/` with the rebuilt `dist/` files, then restart the
+Node application. Do not replace the database or the existing `server/public/`
+files unless the frontend itself is being updated.
+
 ---
 
 ## Troubleshooting
@@ -219,6 +228,17 @@ restart the application. This bypasses the admin row for login only.
 After logging in, go to **Admin → Settings** and save the credentials. Then
 remove `AUTH_CREDENTIALS_SOURCE` (or set it back to `database`) and restart.
 The normal database-backed login will then be used.
+
+If the old `.env` email still works after changing the email in Admin →
+Settings, `AUTH_CREDENTIALS_SOURCE=env` is still active or the server is
+running an older `dist/` bundle. Remove that variable, deploy the rebuilt
+server bundle, restart the app, log out, and then log in with the new
+database-backed email.
+
+The homepage and photography page use `GET /api/site-images` publicly. A
+`401 Not authenticated` response for that request indicates an old server
+bundle whose router-wide admin middleware is blocking public routes; it is not
+a reason to recreate or migrate the database.
 
 If the `admin_users` table does not exist, import
 `deploy/admin-recovery.mysql.sql` in phpMyAdmin. It creates only the
