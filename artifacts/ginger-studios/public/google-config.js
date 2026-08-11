@@ -5,5 +5,5 @@
  * This is intentionally not a secret and is safe to serve in the browser.
  */
 window.GINGER_CONFIG = {
-  googleClientId: "",
+  googleClientId: "503975765333-v256qifugdrnkf9lvfnragsfbglvtikt.apps.googleusercontent.com",
 };

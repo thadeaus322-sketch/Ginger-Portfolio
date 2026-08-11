@@ -94,5 +94,5 @@ description = "Matching backend and frontend update. Fixes the missing admin coo
 id = "VzDH9lRbVVG_OEjknufPU"
 uri = "file://deploy/ginger-harmon-public-update.zip"
 type = "unspecified"
-title = "Ginger Harmon public update"
-description = "Only the updated frontend files needed for the Harmon site: index.html, google-config.js, the logo share image, and matching assets."
+title = "Ginger Harmon update with Google Drive ID"
+description = "Ready-to-upload frontend update containing the configured Google Client ID, share-preview logo, updated HTML, and matching assets. It does not include database or server files."
