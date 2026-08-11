@@ -89,3 +89,10 @@ uri = "file://deploy/ginger-upload-fix.zip"
 type = "unspecified"
 title = "Ginger Studios upload fix"
 description = "Matching backend and frontend update. Fixes the missing admin cookie and HTTPS-safe local upload URL without changing the database or existing uploaded files."
+
+[[outputs]]
+id = "VzDH9lRbVVG_OEjknufPU"
+uri = "file://deploy/ginger-harmon-public-update.zip"
+type = "unspecified"
+title = "Ginger Harmon public update"
+description = "Only the updated frontend files needed for the Harmon site: index.html, google-config.js, the logo share image, and matching assets."
