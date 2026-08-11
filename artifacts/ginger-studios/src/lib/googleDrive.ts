@@ -7,6 +7,9 @@
 
 declare global {
   interface Window {
+    GINGER_CONFIG?: {
+      googleClientId?: string;
+    };
     google?: {
       accounts: {
         oauth2: {
@@ -21,7 +24,9 @@ declare global {
   }
 }
 
-export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+export const GOOGLE_CLIENT_ID =
+  window.GINGER_CONFIG?.googleClientId?.trim() ||
+  (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined);
 
 /** Lazily load the Google Identity Services script */
 function loadGIS(): Promise<void> {

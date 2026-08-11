@@ -282,6 +282,106 @@ Example with cPanel-prefixed names:
 mysql://johndo_dbuser:MySecretPass123@localhost:3306/johndo_gingerstudios
 ```
 
+## Google Drive setup (Harmon / self-hosted)
+
+The **Save to Google Drive** button uses Google Identity Services in the browser.
+It does not use Replit's Google connection, so the hosted site needs its own Google
+OAuth web client ID.
+
+### 1. Create the Google OAuth client
+
+1. Open [Google Cloud Console](https://console.cloud.google.com/).
+2. Create or select a project.
+3. Open **APIs & Services → Library**, search for **Google Drive API**, and enable it.
+4. Open **APIs & Services → OAuth consent screen** and complete the app details.
+   For a private studio site, **External** is normally the right choice. Add the
+   Google accounts that will test the app under **Test users** while the app is
+   still in testing.
+5. Open **APIs & Services → Credentials → Create credentials → OAuth client ID**.
+6. Choose **Web application**.
+7. Under **Authorized JavaScript origins**, add the exact origins clients will use,
+   for example:
+
+   ```
+   https://yourdomain.com
+   https://www.yourdomain.com
+   ```
+
+   Do not add a path such as `/gallery`, and do not add a trailing slash. Add
+   `http://localhost:5173` only if you will test locally.
+8. Copy the generated **Client ID**. Never put a client secret in the browser or
+   in the website files; this flow only needs the public client ID.
+
+### 2. Configure the hosted site
+
+After uploading the updated files, open:
+
+```
+server/public/google-config.js
+```
+
+Replace the empty value:
+
+```js
+window.GINGER_CONFIG = {
+  googleClientId: "your-client-id.apps.googleusercontent.com",
+};
+```
+
+The Client ID is public and belongs in this browser file. Do not add a Google
+client secret. Restart the Node.js application in cPanel after saving.
+
+If you prefer to build from source instead, you can set
+`VITE_GOOGLE_CLIENT_ID` before running the frontend build. The `google-config.js`
+method is recommended for Harmon because it lets you change the ID without
+rebuilding the React bundle.
+
+### 3. Test the Drive flow
+
+1. Open a valid client gallery on the exact HTTPS domain registered above.
+2. Click **Save to Google Drive**.
+3. Sign in with a Google account listed as a test user if the OAuth app is still
+   in testing.
+4. Approve the `drive.file` permission.
+5. Confirm that a folder named `<shoot title> — Ginger Studios` appears in Drive.
+
+The permission is limited to files and folders created by this app. Existing
+Drive files are not exposed to the site.
+
+### Google Drive troubleshooting
+
+| Message | Fix |
+|---|---|
+| `Google Drive is not configured yet` | Check `server/public/google-config.js`, then restart the Node app. |
+| `origin_mismatch` | Add the exact `https://yourdomain.com` origin in Google Cloud; do not include a path. |
+| App not verified / test-user warning | Add the signing-in Google account under OAuth consent screen → Test users, or complete Google's verification process before production use. |
+| Popup blocked | Allow popups for the gallery domain and click the button again. |
+| Images fail to upload | Ensure the hosted image URLs are publicly reachable over HTTPS and the gallery page is allowed to fetch them. |
+
+## Share preview logo
+
+The site's Open Graph and X/Twitter metadata now points to:
+
+```
+/images/ginger-studios-share.png
+```
+
+Replace the contents of the hosted `server/public/` folder with the contents of
+the updated frontend build. This is important because `index.html` points to a
+new hashed JavaScript file as well as the new image. The folder must include:
+
+```
+server/public/index.html
+server/public/google-config.js
+server/public/images/ginger-studios-share.png
+server/public/assets/...
+```
+
+Social platforms cache previews, so after deploying, test the full URL again
+using the platform's link debugger or share inspector. WhatsApp and Facebook may
+keep the old image cached for a while; a different query string on the shared
+URL can force a fresh crawl.
+
 ---
 
 *Generated for Harmon Web Host — Ginger Studios & Creatives — July 2026*
