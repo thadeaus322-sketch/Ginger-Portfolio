@@ -103,3 +103,10 @@ uri = "file://deploy/ginger-gallery-fixes.zip"
 type = "unspecified"
 title = "Ginger gallery fixes"
 description = "Host-ready update containing only the rebuilt server bundle, frontend HTML shell, and the two new frontend assets required for gallery downloads, named links, cover thumbnails, sharing previews, and gallery theme toggle."
+
+[[outputs]]
+id = "8s9Rbr3_u9BujwKVlRT9k"
+uri = "file://deploy/package.json"
+type = "unspecified"
+title = "Ginger Studios package.json"
+description = "Server package manifest for the Harmon host, including the required sharp image-processing dependency."
