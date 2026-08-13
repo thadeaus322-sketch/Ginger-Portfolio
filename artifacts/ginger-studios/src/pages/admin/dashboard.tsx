@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { useGetGalleryStats, useListGalleries } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { Images, AlertCircle, CheckCircle, Clock, Link as LinkIcon, Eye, Edit, MoreVertical } from "lucide-react";
+import { getGalleryUrl } from "@/lib/gallery-link";
 
 export default function AdminDashboard() {
   const { data: stats, isLoading: statsLoading } = useGetGalleryStats();
@@ -34,8 +35,8 @@ export default function AdminDashboard() {
     }
   };
 
-  const copyLink = (token: string) => {
-    const url = `${window.location.origin}/gallery/${token}`;
+  const copyLink = (clientName: string, shootTitle: string, token: string) => {
+    const url = getGalleryUrl(window.location.origin, clientName, shootTitle, token);
     navigator.clipboard.writeText(url);
     // would be nice to have toast here but imported useToast above or just rely on simple feedback
   };
@@ -105,7 +106,7 @@ export default function AdminDashboard() {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button 
-                          onClick={() => copyLink(gallery.accessToken)}
+                           onClick={() => copyLink(gallery.clientName, gallery.shootTitle, gallery.accessToken)}
                           className="p-2 text-muted-foreground hover:text-primary transition-colors border border-transparent hover:border-border rounded bg-background"
                           title="Copy Link"
                         >

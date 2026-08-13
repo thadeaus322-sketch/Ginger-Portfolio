@@ -1,3 +1,4 @@
 - [Object Storage Setup](object-storage-setup.md) — `PRIVATE_OBJECT_DIR` stays empty until `setupObjectStorage()` is called from CodeExecution; listing the secret ≠ having a value.
 - [Harmon auth recovery](harmon-auth-recovery.md) — MySQL admin lookup failures and stale rows need an explicit env-credential recovery switch.
 - [Harmon bundled dependencies](harmon-bundled-dependencies.md) — Self-hosted Harmon bundles should include pure-JS runtime drivers when dependency installation is unreliable.
+- [Gallery sharing and host updates](gallery-sharing.md) — Self-hosted gallery links need server-rendered social metadata and compiled frontend/server replacement files.

@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useGetPublicGallery, useRecordGalleryView } from "@workspace/api-client-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Lock } from "lucide-react";
+import { Download, Lock, Moon, Sun } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { saveImagesToDrive, GOOGLE_CLIENT_ID } from "@/lib/googleDrive";
 import { img } from "@/lib/assets";
+import { slugifyGalleryName } from "@/lib/gallery-link";
 const logoIcon = img("images/logo-icon.png");
 
 const WA_CONTACT = "https://wa.me/2347067310008?text=Hi%20Ginger%20Studios!%20I%27d%20like%20to%20request%20extended%20gallery%20access.";
@@ -89,9 +90,16 @@ function SaveToGoogleDriveButton({ imageUrls, shootTitle }: { imageUrls: string[
 }
 
 export default function ClientGallery() {
-  const { token } = useParams<{ token?: string }>();
+  const { token } = useParams<{ token?: string; slug?: string }>();
   const [, setLocation] = useLocation();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [darkMode, setDarkMode] = useState(() => {
+    try {
+      return window.localStorage.getItem("gvs-gallery-theme") === "dark";
+    } catch {
+      return false;
+    }
+  });
 
   const [inputToken, setInputToken] = useState("");
   const handleTokenSubmit = (e: React.FormEvent) => {
@@ -111,6 +119,50 @@ export default function ClientGallery() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gallery, token]);
+
+  useEffect(() => {
+    if (!gallery || !token) return;
+
+    const title = `${gallery.shootTitle} | Ginger Studios & Creatives`;
+    const description = `${gallery.clientName} — ${gallery.shootTitle}. Private client gallery by Ginger Studios & Creatives.`;
+    document.title = title;
+
+    const setMeta = (selector: string, value: string) => {
+      document.querySelector<HTMLMetaElement>(selector)?.setAttribute("content", value);
+    };
+    setMeta('meta[name="description"]', description);
+    setMeta('meta[property="og:title"]', title);
+    setMeta('meta[property="og:description"]', description);
+    setMeta('meta[property="og:image"]', `/api/gallery/${encodeURIComponent(token)}/thumbnail`);
+    setMeta('meta[name="twitter:title"]', title);
+    setMeta('meta[name="twitter:description"]', description);
+    setMeta('meta[name="twitter:image"]', `/api/gallery/${encodeURIComponent(token)}/thumbnail`);
+  }, [gallery, token]);
+
+  const toggleTheme = () => {
+    setDarkMode((current) => {
+      const next = !current;
+      try {
+        window.localStorage.setItem("gvs-gallery-theme", next ? "dark" : "light");
+      } catch {
+        // The toggle still works for this visit when storage is unavailable.
+      }
+      return next;
+    });
+  };
+
+  const downloadAll = () => {
+    if (!token || gallery?.imageUrls.length === 0) return;
+    const anchor = document.createElement("a");
+    anchor.href = `/api/gallery/${encodeURIComponent(token)}/download-all`;
+    anchor.download = `${slugifyGalleryName(gallery.clientName, gallery.shootTitle)}.zip`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  };
+
+  const downloadOneUrl = (index: number) =>
+    `/api/gallery/${encodeURIComponent(token || "")}/download/${index}`;
 
   if (!token) {
     return (
@@ -178,9 +230,13 @@ export default function ClientGallery() {
   if (!gallery) return null;
 
   return (
-    <div className="w-full flex flex-col bg-background min-h-screen">
+    <div className={`w-full flex flex-col min-h-screen transition-colors ${
+      darkMode ? "bg-[#171411] text-[#FBF6EE]" : "bg-background text-foreground"
+    }`}>
       {/* Cover Header */}
-      <div className="relative h-[40vh] md:h-[50vh] w-full bg-muted flex items-end justify-center pb-12 overflow-hidden">
+      <div className={`relative h-[40vh] md:h-[50vh] w-full flex items-end justify-center pb-12 overflow-hidden ${
+        darkMode ? "bg-[#272019]" : "bg-muted"
+      }`}>
         {gallery.coverUrl && (
           <div className="absolute inset-0">
             <img src={gallery.coverUrl} alt="Cover" className="w-full h-full object-cover" />
@@ -198,31 +254,32 @@ export default function ClientGallery() {
 
       <div className="max-w-7xl mx-auto px-6 w-full py-12 md:py-20">
         {/* Actions Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-12 bg-card p-6 border border-border rounded-sm shadow-sm">
+        <div className={`flex flex-col sm:flex-row items-center justify-between gap-6 mb-12 p-6 border rounded-sm shadow-sm ${
+          darkMode ? "bg-[#241e19] border-white/10" : "bg-card border-border"
+        }`}>
           <div className="text-center sm:text-left">
-            <p className="text-foreground font-serif text-xl">{gallery.imageUrls.length} Memories</p>
-            <p className="text-muted-foreground text-sm mt-1">Your high resolution photos, ready to download</p>
+            <p className="font-serif text-xl">{gallery.imageUrls.length} Memories</p>
+            <p className={darkMode ? "text-white/60 text-sm mt-1" : "text-muted-foreground text-sm mt-1"}>Your high resolution photos, ready to download</p>
           </div>
           <div className="flex flex-wrap items-center gap-3 justify-center">
             <SaveToGoogleDriveButton imageUrls={gallery.imageUrls} shootTitle={gallery.shootTitle} />
             <button
-              onClick={() => {
-                gallery.imageUrls.forEach((url, i) => {
-                  setTimeout(() => {
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = `${gallery.shootTitle.replace(/[^a-z0-9]/gi, "-")}-${i + 1}.jpg`;
-                    a.target = "_blank";
-                    a.rel = "noreferrer";
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                  }, i * 250);
-                });
-              }}
+              onClick={downloadAll}
               className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-sm font-medium"
             >
               <Download size={18} /> Download All ({gallery.imageUrls.length})
+            </button>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={darkMode ? "Use light mode" : "Use dark mode"}
+              title={darkMode ? "Use light mode" : "Use dark mode"}
+              className={`flex items-center gap-2 px-3 py-2.5 border rounded-sm transition-colors ${
+                darkMode ? "border-white/15 text-white/80 hover:bg-white/10" : "border-border text-foreground hover:bg-muted"
+              }`}
+            >
+              {darkMode ? <Sun size={17} /> : <Moon size={17} />}
+              <span className="hidden sm:inline text-sm">{darkMode ? "Light" : "Dark"}</span>
             </button>
           </div>
         </div>
@@ -247,7 +304,7 @@ export default function ClientGallery() {
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
               {/* Download icon on hover */}
               <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <a href={url} download target="_blank" rel="noreferrer"
+                 <a href={downloadOneUrl(i)} download
                   onClick={e => e.stopPropagation()}
                   className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-foreground hover:bg-white transition-colors shadow">
                   <Download size={14} />
@@ -258,10 +315,10 @@ export default function ClientGallery() {
         </div>
 
         {/* Footer CTA */}
-        <div className="mt-20 text-center border-t border-border pt-12">
+        <div className={`mt-20 text-center border-t pt-12 ${darkMode ? "border-white/10" : "border-border"}`}>
           <img src={logoIcon} alt="Ginger Studios" className="w-10 h-10 object-contain mx-auto mb-6 opacity-40" />
-          <p className="font-serif italic text-muted-foreground text-lg mb-2">Thank you for trusting us with your memories.</p>
-          <p className="text-muted-foreground text-sm">
+          <p className={`font-serif italic text-lg mb-2 ${darkMode ? "text-white/65" : "text-muted-foreground"}`}>Thank you for trusting us with your memories.</p>
+          <p className={darkMode ? "text-white/55 text-sm" : "text-muted-foreground text-sm"}>
             Questions? Reach us at{" "}
             <a href={`mailto:${EMAIL}`} className="text-primary hover:underline">{EMAIL}</a>
             {" "}or{" "}
@@ -275,15 +332,19 @@ export default function ClientGallery() {
         {selectedImage && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm p-4 md:p-12 cursor-pointer"
+            className={`fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4 md:p-12 cursor-pointer ${
+              darkMode ? "bg-[#171411]/95" : "bg-background/95"
+            }`}
             onClick={() => setSelectedImage(null)}
           >
             <div className="relative max-w-6xl w-full h-full flex items-center justify-center cursor-default" onClick={e => e.stopPropagation()}>
               <img src={selectedImage} alt="Selected memory" className="max-w-full max-h-full object-contain shadow-2xl" />
 
               <div className="absolute top-4 right-4 flex gap-3">
-                <a href={selectedImage} download target="_blank" rel="noreferrer"
-                  className="w-10 h-10 bg-background/80 hover:bg-background border border-border text-foreground flex items-center justify-center rounded-full transition-colors backdrop-blur-md">
+                <a href={downloadOneUrl(gallery.imageUrls.indexOf(selectedImage))} download
+                  className={`w-10 h-10 border flex items-center justify-center rounded-full transition-colors backdrop-blur-md ${
+                    darkMode ? "bg-[#241e19]/80 hover:bg-[#241e19] border-white/15 text-white" : "bg-background/80 hover:bg-background border-border text-foreground"
+                  }`}>
                   <Download size={18} />
                 </a>
                 <button onClick={() => setSelectedImage(null)}

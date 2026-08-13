@@ -44,6 +44,7 @@ function PublicRoutes() {
         <Route path="/" component={Home} />
         <Route path="/photography" component={Photography} />
         <Route path="/videography" component={Videography} />
+        <Route path="/gallery/:slug/:token" component={ClientGallery} />
         <Route path="/gallery" component={ClientGallery} />
         <Route path="/gallery/:token" component={ClientGallery} />
         <Route component={NotFound} />

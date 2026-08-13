@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save, Copy, ExternalLink, CheckCircle2, Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { Link } from "wouter";
+import { getGalleryUrl } from "@/lib/gallery-link";
 
 const defaultExpiry = new Date();
 defaultExpiry.setMonth(defaultExpiry.getMonth() + 3); // 3 months
@@ -73,6 +74,7 @@ export default function NewGallery() {
 
   // Upload state
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  const [coverImageId, setCoverImageId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -108,7 +110,11 @@ export default function NewGallery() {
       }
     }
 
-    setUploadedImages(prev => [...prev, ...newImages]);
+    setUploadedImages(prev => {
+      const next = [...prev, ...newImages];
+      if (!coverImageId && next[0]) setCoverImageId(next[0].id);
+      return next;
+    });
     setUploading(false);
     setUploadProgress(0);
   }, [toast]);
@@ -120,7 +126,11 @@ export default function NewGallery() {
   }, [handleFiles]);
 
   const removeImage = (id: string) => {
-    setUploadedImages(prev => prev.filter(img => img.id !== id));
+    setUploadedImages(prev => {
+      const next = prev.filter(img => img.id !== id);
+      if (id === coverImageId) setCoverImageId(next[0]?.id ?? null);
+      return next;
+    });
   };
 
   // ── Form submit ─────────────────────────────────────────────────────────────
@@ -131,6 +141,7 @@ export default function NewGallery() {
     }
 
     const imageUrls = uploadedImages.map(img => img.url);
+    const coverUrl = uploadedImages.find(img => img.id === coverImageId)?.url ?? imageUrls[0] ?? null;
 
     createMutation.mutate(
       {
@@ -140,14 +151,14 @@ export default function NewGallery() {
           expiresAt:   new Date(data.expiresAt).toISOString(),
           notes:       data.notes || null,
           imageUrls,
-          coverUrl:    imageUrls[0] || null,
+           coverUrl,
         },
       },
       {
         onSuccess: (newGallery) => {
           queryClient.invalidateQueries({ queryKey: getListGalleriesQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetGalleryStatsQueryKey() });
-          const publicUrl = `${window.location.origin}/gallery/${newGallery.accessToken}`;
+           const publicUrl = getGalleryUrl(window.location.origin, data.clientName, data.shootTitle, newGallery.accessToken);
           setCreated({ id: newGallery.id, accessToken: newGallery.accessToken, publicUrl });
           navigator.clipboard.writeText(publicUrl).catch(() => {});
         },
@@ -235,8 +246,8 @@ export default function NewGallery() {
           </div>
         </div>
 
-        <button
-          onClick={() => { setCreated(null); setCopied(false); setUploadedImages([]); form.reset(); }}
+           <button
+           onClick={() => { setCreated(null); setCopied(false); setUploadedImages([]); setCoverImageId(null); form.reset(); }}
           className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
         >
           + Create another gallery
@@ -352,9 +363,21 @@ export default function NewGallery() {
                 {uploadedImages.map((img, idx) => (
                   <div key={img.id} className="relative aspect-square rounded-sm overflow-hidden bg-muted group">
                     <img src={img.previewUrl} alt={img.name} className="w-full h-full object-cover" loading="lazy" />
-                    {idx === 0 && (
+                    {img.id === coverImageId && (
                       <div className="absolute top-1 left-1 bg-primary text-[8px] px-1.5 py-0.5 rounded text-white font-bold leading-none">Cover</div>
                     )}
+                    <button
+                      type="button"
+                      title="Use as cover photo"
+                      onClick={e => { e.stopPropagation(); setCoverImageId(img.id); }}
+                      className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-bold leading-none transition-opacity ${
+                        img.id === coverImageId
+                          ? "bg-white/90 text-foreground"
+                          : "bg-black/60 text-white"
+                      }`}
+                    >
+                      {img.id === coverImageId ? "Cover photo" : "Set cover"}
+                    </button>
                     <button
                       type="button"
                       onClick={e => { e.stopPropagation(); removeImage(img.id); }}

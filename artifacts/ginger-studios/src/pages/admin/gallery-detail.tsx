@@ -14,6 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ArrowLeft, Save, Copy, RefreshCw, Trash2, Ban, ExternalLink, Upload, X, Loader2, Link2, Plus } from "lucide-react";
+import { getGalleryUrl } from "@/lib/gallery-link";
 
 export default function GalleryDetail() {
   const { id } = useParams<{ id: string }>();
@@ -35,6 +36,7 @@ export default function GalleryDetail() {
 
   // Photo state
   const [localImageUrls, setLocalImageUrls] = useState<string[]>([]);
+  const [localCoverUrl, setLocalCoverUrl] = useState<string | null>(null);
   const [urlInput, setUrlInput]             = useState("");
   const [urlError, setUrlError]             = useState("");
   const [uploadingCount, setUploadingCount] = useState(0);
@@ -55,20 +57,23 @@ export default function GalleryDetail() {
       setExpiresAt(gallery.expiresAt.split("T")[0]);
       setNotes(gallery.notes || "");
       setLocalImageUrls(gallery.imageUrls);
+       setLocalCoverUrl(gallery.coverUrl || gallery.imageUrls[0] || null);
     }
   }, [gallery]);
 
   // ── Persist URLs to DB ─────────────────────────────────────────────────────
-  const saveUrls = useCallback(async (urls: string[]) => {
+  const saveUrls = useCallback(async (urls: string[], requestedCoverUrl = localCoverUrl) => {
+    const nextCoverUrl = requestedCoverUrl && urls.includes(requestedCoverUrl) ? requestedCoverUrl : urls[0] || null;
+    setLocalCoverUrl(nextCoverUrl);
     await fetch(`/api/galleries/${galleryId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ imageUrls: urls, coverUrl: urls[0] || null }),
+      body: JSON.stringify({ imageUrls: urls, coverUrl: nextCoverUrl }),
     });
     queryClient.invalidateQueries({ queryKey: getGetGalleryQueryKey(galleryId) });
     queryClient.invalidateQueries({ queryKey: getListGalleriesQueryKey() });
-  }, [galleryId, queryClient]);
+  }, [galleryId, localCoverUrl, queryClient]);
 
   // ── File upload handler ────────────────────────────────────────────────────
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,10 +142,10 @@ export default function GalleryDetail() {
   const removeImage = useCallback((url: string) => {
     const newUrls = localImageUrls.filter(u => u !== url);
     setLocalImageUrls(newUrls);
-    saveUrls(newUrls)
+    saveUrls(newUrls, url === localCoverUrl ? newUrls[0] || null : localCoverUrl)
       .then(() => toast({ title: "Photo removed" }))
       .catch(() => toast({ variant: "destructive", title: "Failed to remove photo" }));
-  }, [localImageUrls, saveUrls, toast]);
+  }, [localCoverUrl, localImageUrls, saveUrls, toast]);
 
   const handleSave = () => {
     updateMutation.mutate({
@@ -200,7 +205,7 @@ export default function GalleryDetail() {
   if (isLoading) return <div className="p-8">Loading gallery details…</div>;
   if (!gallery)  return <div className="p-8">Gallery not found.</div>;
 
-  const publicUrl  = `${window.location.origin}/gallery/${gallery.accessToken}`;
+  const publicUrl  = getGalleryUrl(window.location.origin, gallery.clientName, gallery.shootTitle, gallery.accessToken);
   const busy       = isUploading || uploadingCount > 0;
 
   return (
@@ -335,9 +340,21 @@ export default function GalleryDetail() {
                 {localImageUrls.map((url, i) => (
                   <div key={i} className="aspect-square bg-muted rounded-sm overflow-hidden relative group">
                     <img src={url} className="w-full h-full object-cover" alt="" loading="lazy" />
-                    {i === 0 && (
+                    {url === localCoverUrl && (
                       <div className="absolute top-2 left-2 bg-primary text-[8px] px-2 py-0.5 rounded text-white font-medium">Cover</div>
                     )}
+                    <button
+                      type="button"
+                      title="Use as cover photo"
+                      onClick={() => saveUrls(localImageUrls, url).then(() => toast({ title: "Cover photo updated" }))}
+                      className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-bold transition-opacity ${
+                        url === localCoverUrl
+                          ? "bg-white/90 text-foreground"
+                          : "bg-black/60 text-white"
+                      }`}
+                    >
+                      {url === localCoverUrl ? "Cover photo" : "Set cover"}
+                    </button>
                     <button type="button" onClick={() => removeImage(url)}
                       className="absolute top-1.5 right-1.5 w-6 h-6 bg-destructive rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <X size={12} className="text-white" />

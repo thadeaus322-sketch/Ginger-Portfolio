@@ -392,6 +392,41 @@ export const GetPublicGalleryResponse = zod.object({
 
 
 /**
+ * @summary Download one public gallery image
+ */
+export const downloadGalleryImagePathIndexMin = 0;
+
+
+
+export const DownloadGalleryImageParams = zod.object({
+  "token": zod.coerce.string(),
+  "index": zod.coerce.number().min(downloadGalleryImagePathIndexMin)
+})
+
+export const DownloadGalleryImageResponse = zod.unknown()
+
+
+/**
+ * @summary Download all public gallery images as a ZIP
+ */
+export const DownloadGalleryZipParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const DownloadGalleryZipResponse = zod.unknown()
+
+
+/**
+ * @summary Get the optimized cover thumbnail for a public gallery
+ */
+export const GetGalleryThumbnailParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const GetGalleryThumbnailResponse = zod.unknown()
+
+
+/**
  * @summary Increment view count
  */
 export const RecordGalleryViewParams = zod.object({

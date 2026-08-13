@@ -96,3 +96,10 @@ uri = "file://deploy/ginger-harmon-public-update.zip"
 type = "unspecified"
 title = "Ginger Harmon update with Google Drive ID"
 description = "Ready-to-upload frontend update containing the configured Google Client ID, share-preview logo, updated HTML, and matching assets. It does not include database or server files."
+
+[[outputs]]
+id = "IhC3BRkOnyn2UcglFp99L"
+uri = "file://deploy/ginger-gallery-fixes.zip"
+type = "unspecified"
+title = "Ginger gallery fixes"
+description = "Host-ready update containing only the rebuilt server bundle, frontend HTML shell, and the two new frontend assets required for gallery downloads, named links, cover thumbnails, sharing previews, and gallery theme toggle."
