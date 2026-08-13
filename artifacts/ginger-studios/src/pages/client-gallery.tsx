@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useGetPublicGallery, useRecordGalleryView } from "@workspace/api-client-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Lock } from "lucide-react";
+import { Download, Lock, Moon, Sun } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { saveImagesToDrive, GOOGLE_CLIENT_ID } from "@/lib/googleDrive";
 import { img } from "@/lib/assets";
+import { downloadSingleFile } from "@/lib/downloads";
 const logoIcon = img("images/logo-icon.png");
 
 const WA_CONTACT = "https://wa.me/2347067310008?text=Hi%20Ginger%20Studios!%20I%27d%20like%20to%20request%20extended%20gallery%20access.";
@@ -89,9 +90,12 @@ function SaveToGoogleDriveButton({ imageUrls, shootTitle }: { imageUrls: string[
 }
 
 export default function ClientGallery() {
-  const { token } = useParams<{ token?: string }>();
+  const { token } = useParams<{ token?: string; slug?: string }>();
   const [, setLocation] = useLocation();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [downloadStatus, setDownloadStatus] = useState<"idle" | "downloading" | "done" | "error">("idle");
+  const [downloadProgress, setDownloadProgress] = useState({ completed: 0, total: 0 });
+  const [isDark, setIsDark] = useState(false);
 
   const [inputToken, setInputToken] = useState("");
   const handleTokenSubmit = (e: React.FormEvent) => {
@@ -104,6 +108,15 @@ export default function ClientGallery() {
   const { data: gallery, isLoading, error } = useGetPublicGallery(token || "");
 
   const recordView = useRecordGalleryView();
+
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem("gvs-gallery-theme");
+    setIsDark(savedTheme === "dark");
+  }, []);
+
+  useEffect(() => {
+    document.title = gallery ? `${gallery.shootTitle} | Ginger Studios` : "Client Gallery | Ginger Studios";
+  }, [gallery]);
 
   useEffect(() => {
     if (gallery && token) {
@@ -177,8 +190,50 @@ export default function ClientGallery() {
 
   if (!gallery) return null;
 
+  const fileBase = gallery.shootTitle.replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "gallery";
+  const imageDownloadUrl = (index: number) => `/api/gallery/${encodeURIComponent(token || "")}/download/${index}`;
+
+  const handleDownloadAll = async () => {
+    if (downloadStatus === "downloading" || gallery.imageUrls.length === 0) return;
+    setDownloadStatus("downloading");
+    setDownloadProgress({ completed: 0, total: 1 });
+    try {
+      await downloadSingleFile(
+        `/api/gallery/${encodeURIComponent(token || "")}/download`,
+        `${fileBase}-photos.zip`,
+      );
+      setDownloadProgress({ completed: 1, total: 1 });
+      setDownloadStatus("done");
+      window.setTimeout(() => setDownloadStatus("idle"), 3500);
+    } catch {
+      setDownloadStatus("error");
+      window.setTimeout(() => setDownloadStatus("idle"), 5000);
+    }
+  };
+
+  const handleDownloadOne = async (index: number) => {
+    if (downloadStatus === "downloading") return;
+    try {
+      await downloadSingleFile(
+        imageDownloadUrl(index),
+        `${fileBase}-${index + 1}.jpg`,
+      );
+    } catch {
+      setDownloadStatus("error");
+      window.setTimeout(() => setDownloadStatus("idle"), 5000);
+    }
+  };
+
+  const toggleTheme = () => {
+    setIsDark((current) => {
+      const next = !current;
+      window.localStorage.setItem("gvs-gallery-theme", next ? "dark" : "light");
+      return next;
+    });
+  };
+
   return (
-    <div className="w-full flex flex-col bg-background min-h-screen">
+    <div className={["w-full flex flex-col min-h-screen transition-colors", isDark ? "dark bg-[#211C17]" : "bg-background"].join(" ")}>
       {/* Cover Header */}
       <div className="relative h-[40vh] md:h-[50vh] w-full bg-muted flex items-end justify-center pb-12 overflow-hidden">
         {gallery.coverUrl && (
@@ -187,6 +242,15 @@ export default function ClientGallery() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
           </div>
         )}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={isDark ? "Use light mode" : "Use dark mode"}
+          className="absolute top-5 right-5 z-20 inline-flex items-center gap-2 rounded-full border border-white/30 bg-black/25 px-3 py-2 text-xs font-medium text-white backdrop-blur-md transition-colors hover:bg-black/40"
+        >
+          {isDark ? <Sun size={15} /> : <Moon size={15} />}
+          {isDark ? "Light" : "Dark"}
+        </button>
         <div className="relative z-10 text-center px-6">
           <h2 className="text-primary/90 text-sm font-bold tracking-[0.2em] uppercase mb-4">{gallery.clientName}</h2>
           <h1 className="font-serif text-4xl md:text-6xl text-white mb-6 drop-shadow-md">{gallery.shootTitle}</h1>
@@ -206,23 +270,18 @@ export default function ClientGallery() {
           <div className="flex flex-wrap items-center gap-3 justify-center">
             <SaveToGoogleDriveButton imageUrls={gallery.imageUrls} shootTitle={gallery.shootTitle} />
             <button
-              onClick={() => {
-                gallery.imageUrls.forEach((url, i) => {
-                  setTimeout(() => {
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = `${gallery.shootTitle.replace(/[^a-z0-9]/gi, "-")}-${i + 1}.jpg`;
-                    a.target = "_blank";
-                    a.rel = "noreferrer";
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                  }, i * 250);
-                });
-              }}
-              className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-sm font-medium"
+              onClick={handleDownloadAll}
+              disabled={downloadStatus === "downloading"}
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-sm font-medium disabled:opacity-70"
             >
-              <Download size={18} /> Download All ({gallery.imageUrls.length})
+              <Download size={18} />
+              {downloadStatus === "downloading"
+                ? `Preparing ZIP… ${downloadProgress.completed}/${downloadProgress.total}`
+                : downloadStatus === "done"
+                ? "ZIP downloaded"
+                : downloadStatus === "error"
+                ? "Download failed — try again"
+                : `Download All (${gallery.imageUrls.length})`}
             </button>
           </div>
         </div>
@@ -246,12 +305,13 @@ export default function ClientGallery() {
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
               {/* Download icon on hover */}
-              <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <a href={url} download target="_blank" rel="noreferrer"
-                  onClick={e => e.stopPropagation()}
+               <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                 <button
+                   type="button"
+                   onClick={(e) => { e.stopPropagation(); void handleDownloadOne(i); }}
                   className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-foreground hover:bg-white transition-colors shadow">
                   <Download size={14} />
-                </a>
+                 </button>
               </div>
             </motion.div>
           ))}
@@ -282,10 +342,15 @@ export default function ClientGallery() {
               <img src={selectedImage} alt="Selected memory" className="max-w-full max-h-full object-contain shadow-2xl" />
 
               <div className="absolute top-4 right-4 flex gap-3">
-                <a href={selectedImage} download target="_blank" rel="noreferrer"
+                <button
+                  type="button"
+                  onClick={() => {
+                    const index = gallery.imageUrls.indexOf(selectedImage);
+                    if (index >= 0) void handleDownloadOne(index);
+                  }}
                   className="w-10 h-10 bg-background/80 hover:bg-background border border-border text-foreground flex items-center justify-center rounded-full transition-colors backdrop-blur-md">
                   <Download size={18} />
-                </a>
+                </button>
                 <button onClick={() => setSelectedImage(null)}
                   className="w-10 h-10 bg-background/80 hover:bg-background border border-border text-foreground flex items-center justify-center rounded-full transition-colors backdrop-blur-md">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>

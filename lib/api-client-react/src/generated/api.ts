@@ -1611,3 +1611,239 @@ export const useRecordGalleryView = <TError = ErrorType<unknown>,
       return useMutation(getRecordGalleryViewMutationOptions(options));
     }
 
+export const getGetPublicGalleryCoverUrl = (token: string,) => {
+
+
+
+
+  return `/api/gallery/${token}/cover`
+}
+
+/**
+ * @summary Get an optimized cover thumbnail for social previews
+ */
+export const getPublicGalleryCover = async (token: string, options?: RequestInit): Promise<Blob> => {
+
+  return customFetch<Blob>(getGetPublicGalleryCoverUrl(token),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPublicGalleryCoverQueryKey = (token: string,) => {
+    return [
+    `/api/gallery/${token}/cover`
+    ] as const;
+    }
+
+
+export const getGetPublicGalleryCoverQueryOptions = <TData = Awaited<ReturnType<typeof getPublicGalleryCover>>, TError = ErrorType<void>>(token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicGalleryCover>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPublicGalleryCoverQueryKey(token);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicGalleryCover>>> = ({ signal }) => getPublicGalleryCover(token, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: token !== null && token !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPublicGalleryCover>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPublicGalleryCoverQueryResult = NonNullable<Awaited<ReturnType<typeof getPublicGalleryCover>>>
+export type GetPublicGalleryCoverQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get an optimized cover thumbnail for social previews
+ */
+
+export function useGetPublicGalleryCover<TData = Awaited<ReturnType<typeof getPublicGalleryCover>>, TError = ErrorType<void>>(
+ token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicGalleryCover>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPublicGalleryCoverQueryOptions(token,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getDownloadPublicGalleryUrl = (token: string,) => {
+
+
+
+
+  return `/api/gallery/${token}/download`
+}
+
+/**
+ * @summary Download all gallery images as a ZIP archive
+ */
+export const downloadPublicGallery = async (token: string, options?: RequestInit): Promise<Blob> => {
+
+  return customFetch<Blob>(getDownloadPublicGalleryUrl(token),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getDownloadPublicGalleryQueryKey = (token: string,) => {
+    return [
+    `/api/gallery/${token}/download`
+    ] as const;
+    }
+
+
+export const getDownloadPublicGalleryQueryOptions = <TData = Awaited<ReturnType<typeof downloadPublicGallery>>, TError = ErrorType<void>>(token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadPublicGallery>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDownloadPublicGalleryQueryKey(token);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadPublicGallery>>> = ({ signal }) => downloadPublicGallery(token, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: token !== null && token !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof downloadPublicGallery>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type DownloadPublicGalleryQueryResult = NonNullable<Awaited<ReturnType<typeof downloadPublicGallery>>>
+export type DownloadPublicGalleryQueryError = ErrorType<void>
+
+
+/**
+ * @summary Download all gallery images as a ZIP archive
+ */
+
+export function useDownloadPublicGallery<TData = Awaited<ReturnType<typeof downloadPublicGallery>>, TError = ErrorType<void>>(
+ token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadPublicGallery>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getDownloadPublicGalleryQueryOptions(token,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getDownloadPublicGalleryImageUrl = (token: string,
+    index: number,) => {
+
+
+
+
+  return `/api/gallery/${token}/download/${index}`
+}
+
+/**
+ * @summary Download one gallery image with a filename
+ */
+export const downloadPublicGalleryImage = async (token: string,
+    index: number, options?: RequestInit): Promise<Blob> => {
+
+  return customFetch<Blob>(getDownloadPublicGalleryImageUrl(token,index),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getDownloadPublicGalleryImageQueryKey = (token: string,
+    index: number,) => {
+    return [
+    `/api/gallery/${token}/download/${index}`
+    ] as const;
+    }
+
+
+export const getDownloadPublicGalleryImageQueryOptions = <TData = Awaited<ReturnType<typeof downloadPublicGalleryImage>>, TError = ErrorType<void>>(token: string,
+    index: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadPublicGalleryImage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDownloadPublicGalleryImageQueryKey(token,index);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadPublicGalleryImage>>> = ({ signal }) => downloadPublicGalleryImage(token,index, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: token !== null && token !== undefined && index !== null && index !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof downloadPublicGalleryImage>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type DownloadPublicGalleryImageQueryResult = NonNullable<Awaited<ReturnType<typeof downloadPublicGalleryImage>>>
+export type DownloadPublicGalleryImageQueryError = ErrorType<void>
+
+
+/**
+ * @summary Download one gallery image with a filename
+ */
+
+export function useDownloadPublicGalleryImage<TData = Awaited<ReturnType<typeof downloadPublicGalleryImage>>, TError = ErrorType<void>>(
+ token: string,
+    index: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadPublicGalleryImage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getDownloadPublicGalleryImageQueryOptions(token,index,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+

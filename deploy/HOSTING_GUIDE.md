@@ -188,10 +188,11 @@ If you need to deploy an updated version:
 
 Harmon runs the compiled files in `server/dist/`, not the TypeScript source
 files. If you only change or upload source files, the hosted app continues to
-run the old code. For the public site-images/auth middleware fix, replace the
-contents of `server/dist/` with the rebuilt `dist/` files, then restart the
-Node application. Do not replace the database or the existing `server/public/`
-files unless the frontend itself is being updated.
+run the old code. For a server-side fix such as gallery downloads or share
+metadata, replace the contents of `server/dist/` with the rebuilt `dist/`
+files, then restart the Node application. Do not replace the database, uploads
+folder, or existing `server/public/` files unless the frontend itself is being
+updated.
 
 ---
 
@@ -357,6 +358,30 @@ Drive files are not exposed to the site.
 | App not verified / test-user warning | Add the signing-in Google account under OAuth consent screen → Test users, or complete Google's verification process before production use. |
 | Popup blocked | Allow popups for the gallery domain and click the button again. |
 | Images fail to upload | Ensure the hosted image URLs are publicly reachable over HTTPS and the gallery page is allowed to fetch them. |
+
+## Gallery downloads and share previews
+
+New gallery links use a readable path such as:
+
+```
+/gallery/ali-and-tobi-wedding/[access-token]
+```
+
+Existing `/gallery/[access-token]` links remain valid. The gallery page now
+downloads individual images through the server so the original file type is
+preserved, and **Download All** creates one ZIP file for reliable desktop and
+mobile downloads. The server bundle must be updated for these download routes.
+
+When a crawler opens a readable gallery link, the server injects the gallery
+title, description, and cover photo into the page metadata. It also serves a
+cached 1200×630 JPEG cover thumbnail at:
+
+```
+/api/gallery/[access-token]/cover
+```
+
+This keeps social previews smaller than the original gallery image while
+leaving the full-resolution image available inside the gallery.
 
 ## Share preview logo
 
