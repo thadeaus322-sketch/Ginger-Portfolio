@@ -2,7 +2,6 @@ import { Link } from "wouter";
 import { useGetGalleryStats, useListGalleries } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { Images, AlertCircle, CheckCircle, Clock, Link as LinkIcon, Eye, Edit, MoreVertical } from "lucide-react";
-import { getGalleryUrl } from "@/lib/galleryLinks";
 
 export default function AdminDashboard() {
   const { data: stats, isLoading: statsLoading } = useGetGalleryStats();
@@ -36,10 +35,7 @@ export default function AdminDashboard() {
   };
 
   const copyLink = (token: string) => {
-     const gallery = galleries?.find((item) => item.accessToken === token);
-     const url = gallery
-       ? getGalleryUrl(window.location.origin, gallery.shootTitle, token)
-       : `${window.location.origin}/gallery/${token}`;
+    const url = `${window.location.origin}/gallery/${token}`;
     navigator.clipboard.writeText(url);
     // would be nice to have toast here but imported useToast above or just rely on simple feedback
   };

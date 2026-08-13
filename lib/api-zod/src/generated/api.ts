@@ -403,38 +403,3 @@ export const RecordGalleryViewResponse = zod.object({
 })
 
 
-/**
- * @summary Get an optimized cover thumbnail for social previews
- */
-export const GetPublicGalleryCoverParams = zod.object({
-  "token": zod.coerce.string()
-})
-
-export const GetPublicGalleryCoverResponse = zod.unknown()
-
-
-/**
- * @summary Download all gallery images as a ZIP archive
- */
-export const DownloadPublicGalleryParams = zod.object({
-  "token": zod.coerce.string()
-})
-
-export const DownloadPublicGalleryResponse = zod.unknown()
-
-
-/**
- * @summary Download one gallery image with a filename
- */
-export const downloadPublicGalleryImagePathIndexMin = 0;
-
-
-
-export const DownloadPublicGalleryImageParams = zod.object({
-  "token": zod.coerce.string(),
-  "index": zod.coerce.number().min(downloadPublicGalleryImagePathIndexMin)
-})
-
-export const DownloadPublicGalleryImageResponse = zod.unknown()
-
-

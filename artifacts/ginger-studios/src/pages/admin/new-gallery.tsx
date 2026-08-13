@@ -8,7 +8,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save, Copy, ExternalLink, CheckCircle2, Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { Link } from "wouter";
-import { getGalleryUrl } from "@/lib/galleryLinks";
 
 const defaultExpiry = new Date();
 defaultExpiry.setMonth(defaultExpiry.getMonth() + 3); // 3 months
@@ -148,7 +147,7 @@ export default function NewGallery() {
         onSuccess: (newGallery) => {
           queryClient.invalidateQueries({ queryKey: getListGalleriesQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetGalleryStatsQueryKey() });
-           const publicUrl = getGalleryUrl(window.location.origin, data.shootTitle, newGallery.accessToken);
+          const publicUrl = `${window.location.origin}/gallery/${newGallery.accessToken}`;
           setCreated({ id: newGallery.id, accessToken: newGallery.accessToken, publicUrl });
           navigator.clipboard.writeText(publicUrl).catch(() => {});
         },

@@ -14,7 +14,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ArrowLeft, Save, Copy, RefreshCw, Trash2, Ban, ExternalLink, Upload, X, Loader2, Link2, Plus } from "lucide-react";
-import { getGalleryUrl } from "@/lib/galleryLinks";
 
 export default function GalleryDetail() {
   const { id } = useParams<{ id: string }>();
@@ -193,7 +192,7 @@ export default function GalleryDetail() {
 
   const copyLink = () => {
     if (gallery) {
-       navigator.clipboard.writeText(getGalleryUrl(window.location.origin, gallery.shootTitle, gallery.accessToken));
+      navigator.clipboard.writeText(`${window.location.origin}/gallery/${gallery.accessToken}`);
       toast({ title: "Link copied to clipboard" });
     }
   };
@@ -201,7 +200,7 @@ export default function GalleryDetail() {
   if (isLoading) return <div className="p-8">Loading gallery details…</div>;
   if (!gallery)  return <div className="p-8">Gallery not found.</div>;
 
-   const publicUrl  = getGalleryUrl(window.location.origin, gallery.shootTitle, gallery.accessToken);
+  const publicUrl  = `${window.location.origin}/gallery/${gallery.accessToken}`;
   const busy       = isUploading || uploadingCount > 0;
 
   return (
